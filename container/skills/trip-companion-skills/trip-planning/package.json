@@ -1,0 +1,10 @@
+{
+  "name": "trip-planning-skill",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Dawn-to-dusk plan model + deterministic show/validate/check/export for the Trip Companion NanoClaw skill (runs under Bun in agent containers, built on trip-core)",
+  "scripts": {
+    "test": "bun test"
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "name": "trip-workflows-skill",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Trip Companion workflow pack for vendor solicitations and traveler information sequences",
+  "scripts": {
+    "test": "bun test"
+  }
+}

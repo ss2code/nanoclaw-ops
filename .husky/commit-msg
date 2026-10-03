@@ -1,0 +1,18 @@
+#!/bin/sh
+
+message_file="$1"
+
+if ! awk '
+  /^[[:space:]]*#/ { next }
+  !seen_subject && /[^[:space:]]/ { seen_subject = 1; next }
+  seen_subject && !seen_separator && /^[[:space:]]*$/ { seen_separator = 1; next }
+  seen_separator && /[^[:space:]]/ { has_body = 1 }
+  END { exit !(seen_subject && seen_separator && has_body) }
+' "$message_file"; then
+  echo "Commit messages need a subject, a blank line, and a non-empty description." >&2
+  echo "GitHub shows the description beneath the commit title." >&2
+  exit 1
+fi
+
+# PII/secret gate for the message itself (names, numbers, ids in prose).
+bash scripts/pii-lint.sh --message "$1" || exit 1

@@ -1,0 +1,12 @@
+{
+  "id": "gpay-14-crop",
+  "kind": "upi",
+  "style": "gpay",
+  "amount": "15906.54",
+  "currency": "INR",
+  "payer": "Anil Kumar",
+  "payee_or_merchant": "Meera Mehta",
+  "txn_id": "T20263958884289525",
+  "degradation": "crop",
+  "expected": "extract-or-clarify"
+}

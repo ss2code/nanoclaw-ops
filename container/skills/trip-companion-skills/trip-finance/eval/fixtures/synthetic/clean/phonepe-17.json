@@ -1,0 +1,12 @@
+{
+  "id": "phonepe-17",
+  "kind": "upi",
+  "style": "phonepe",
+  "amount": "17555.00",
+  "currency": "INR",
+  "payer": "Diya Kapoor",
+  "payee_or_merchant": "Anil Kumar",
+  "txn_id": "T20266169610445610",
+  "degradation": null,
+  "expected": "extract"
+}

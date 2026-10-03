@@ -1,0 +1,12 @@
+{
+  "id": "paytm-01-blur",
+  "kind": "upi",
+  "style": "paytm",
+  "amount": "6393.00",
+  "currency": "INR",
+  "payer": null,
+  "payee_or_merchant": "Sunita Sharma",
+  "txn_id": "T20265783914106021",
+  "degradation": "blur",
+  "expected": "extract-or-clarify"
+}

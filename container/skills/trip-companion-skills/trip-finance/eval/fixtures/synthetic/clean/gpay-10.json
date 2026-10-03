@@ -1,0 +1,12 @@
+{
+  "id": "gpay-10",
+  "kind": "upi",
+  "style": "gpay",
+  "amount": "2574.01",
+  "currency": "INR",
+  "payer": "Tara Kapoor",
+  "payee_or_merchant": "Rohit Verma",
+  "txn_id": "T20260511098676134",
+  "degradation": null,
+  "expected": "extract"
+}

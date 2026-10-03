@@ -1,0 +1,4 @@
+interface:
+  display_name: "Add Pi Provider"
+  short_description: "Install Pi as a NanoClaw agent provider"
+  default_prompt: "Use $add-pi to install and validate the Pi provider for NanoClaw."

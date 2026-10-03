@@ -1,0 +1,10 @@
+{
+  "name": "trip-finance-skill",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Deterministic finance core for the Trip Companion NanoClaw skill (runs under Bun in agent containers)",
+  "scripts": {
+    "test": "bun test"
+  }
+}

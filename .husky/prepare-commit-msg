@@ -1,0 +1,7 @@
+#!/bin/sh
+
+message_file="$1"
+
+if ! sed '/^[[:space:]]*#/d' "$message_file" | grep -q '[^[:space:]]'; then
+  cat .gitmessage >> "$message_file"
+fi

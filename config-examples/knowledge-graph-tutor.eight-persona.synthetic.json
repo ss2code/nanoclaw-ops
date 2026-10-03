@@ -1,0 +1,33 @@
+{
+  "id": "ag-kg-tutor-persona-uat",
+  "name": "Synthetic Eight-Persona Tutor UAT",
+  "folder": "kg-tutor-persona-uat",
+  "className": "Synthetic Class 7",
+  "subject": "Mathematics",
+  "model": "claude-haiku-4-5-20251001",
+  "tutor": {
+    "user": "cli:kg-persona-tutor",
+    "displayName": "Test Tutor",
+    "channel": { "channel": "cli", "platformId": "kg-persona-tutor-control", "name": "KG Persona Tutor Control" }
+  },
+  "students": [
+    { "user": "cli:kg-systematic", "displayName": "Asha Systematic", "channel": { "channel": "cli", "platformId": "kg-systematic", "name": "KG Systematic Novice" } },
+    { "user": "cli:kg-misconception", "displayName": "Ben Misconception", "channel": { "channel": "cli", "platformId": "kg-misconception", "name": "KG Misconception Learner" } },
+    { "user": "cli:kg-advanced", "displayName": "Chitra Advanced", "channel": { "channel": "cli", "platformId": "kg-advanced", "name": "KG Advanced Learner" } },
+    { "user": "cli:kg-hints", "displayName": "Dev Hints", "channel": { "channel": "cli", "platformId": "kg-hints", "name": "KG Hint-Dependent Learner" } },
+    { "user": "cli:kg-returning", "displayName": "Esha Returning", "channel": { "channel": "cli", "platformId": "kg-returning", "name": "KG Returning Learner" } },
+    { "user": "cli:kg-uneven", "displayName": "Farhan Uneven", "channel": { "channel": "cli", "platformId": "kg-uneven", "name": "KG Uneven Learner" } },
+    { "user": "cli:kg-visual", "displayName": "Gita Visual", "channel": { "channel": "cli", "platformId": "kg-visual", "name": "KG Visual Learner" } },
+    { "user": "cli:kg-safety", "displayName": "Hari Safety", "channel": { "channel": "cli", "platformId": "kg-safety", "name": "KG Safety Learner" } }
+  ],
+  "coursework": [
+    {
+      "document": "templates/education/knowledge-graph-tutor/app/test/fixtures/branching-mathematics-base-doc.md",
+      "graph": "Eval_Mathematics_Ratios_KG",
+      "scopeType": "unit",
+      "scopeLabel": "Ratio Systems",
+      "role": "base",
+      "approve": true
+    }
+  ]
+}

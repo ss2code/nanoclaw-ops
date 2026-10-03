@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Trip Suite Improvement Pack — Implementation Spec</title>
+<style>
+  :root { --fg:#1a1a1a; --bg:#ffffff; --muted:#666; --line:#e2e2e2; --code-bg:#f6f6f4; --accent:#0b6e4f; --warn-bg:#fff7e6; --warn-line:#e8c56a; }
+  @media (prefers-color-scheme: dark) {
+    :root { --fg:#e8e8e8; --bg:#161616; --muted:#9a9a9a; --line:#333; --code-bg:#222220; --accent:#4dc596; --warn-bg:#2e2712; --warn-line:#8a6d1f; }
+  }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color:var(--fg); background:var(--bg); max-width:940px; margin:2rem auto; padding:0 1.2rem 6rem; line-height:1.55; }
+  h1 { font-size:1.7rem; border-bottom:3px solid var(--accent); padding-bottom:.4rem; }
+  h2 { font-size:1.25rem; margin-top:2.6rem; border-bottom:1px solid var(--line); padding-bottom:.25rem; }
+  h3 { font-size:1.02rem; margin-top:1.6rem; color:var(--accent); }
+  code, pre { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size:.86em; }
+  code { background:var(--code-bg); padding:.1em .35em; border-radius:4px; }
+  pre { background:var(--code-bg); border:1px solid var(--line); border-radius:8px; padding: .8rem 1rem; overflow-x:auto; line-height:1.45; }
+  pre code { background:none; padding:0; }
+  table { border-collapse:collapse; width:100%; margin:1rem 0; font-size:.92em; }
+  th, td { border:1px solid var(--line); padding:.4rem .6rem; text-align:left; vertical-align:top; }
+  th { background:var(--code-bg); }
+  .meta { color:var(--muted); font-size:.9em; }
+  .callout { background:var(--warn-bg); border:1px solid var(--warn-line); border-radius:8px; padding:.7rem 1rem; margin:1rem 0; }
+  .rule { font-weight:600; }
+  ul li, ol li { margin:.25rem 0; }
+  nav ol { columns:2; }
+  .tag { display:inline-block; font-size:.75em; font-weight:600; padding:.05em .5em; border-radius:10px; background:var(--code-bg); border:1px solid var(--line); color:var(--muted); margin-left:.4rem; vertical-align:middle; }
+</style>
+</head>
+<body>
+
+<h1>Trip Suite Improvement Pack — Implementation Spec</h1>
+<p class="meta">Spec date: 2026-07-10 · Target: <code>container/skills/trip-companion-skills/</code> in the NanoClaw repo · Companion doc: <code>docs/trip-lifecycle-expansion-pack.html</code> (implement THIS pack first — the other depends on §2 and §1 here).</p>
+
+<p>This document specifies eight improvements to the existing Trip Companion skill suite, in implementation order. Each section gives the schema change (exact DDL), the CLI surface (exact commands and output contracts), behavior rules, the instruction-file edits, and the tests to write. It is written to be implemented in one pass, tests included, with no further design decisions needed.</p>
+
+<h2 id="s0">§0 Ground rules — read before writing any code</h2>
+
+<h3>Repo layout and conventions (verified against the tree as of 2026-07-10)</h3>
+<ul>
+  <li>Canonical source: <code>container/skills/trip-companion-skills/&lt;skill&gt;/</code>. Each skill has <code>SKILL.md</code> (on-demand instructions), <code>instructions.md</code> (always-on rules composed into the agent's CLAUDE.md), <code>scripts/&lt;skill&gt;.ts</code> (CLI dispatcher) plus per-module scripts, and <code>test/*.test.ts</code>.</li>
+  <li><span class="rule">Runtime aliases:</span> containers invoke <code>/app/skills/trip-&lt;name&gt;/scripts/…</code>. The aliases at <code>container/skills/trip-*</code> point into this suite — new commands are automatically available through them. Do not rename or move any existing path.</li>
+  <li><span class="rule">The model judges, scripts compute.</span> Every new behavior that involves state, counting, money, dates, or eligibility must live in the script. Instruction text only tells the agent when to call which command and how to relay results.</li>
+  <li>All trip state lives in one SQLite file per group: <code>trip.db</code> (core + planning + finance tables layered by each skill's <code>migrate*</code> step). Memory lives in a separate <code>memory.db</code>.</li>
+</ul>
+
+<h3>Hard technical constraints</h3>
+<ul>
+  <li><strong>bun:sqlite</strong>, not better-sqlite3. Named params must use <code>$name</code> in <em>both</em> SQL and the JS object: <code>.run({ $id: id })</code>. Positional <code>?</code> also fine.</li>
+  <li><code>PRAGMA journal_mode = DELETE</code> is load-bearing (bind-mount visibility). Never change pragmas; always open DBs through the existing helpers (<code>openCoreDb</code> / <code>openPlanningDb</code> / finance <code>openDb</code>).</li>
+  <li><strong>Money is integer minor units</strong> in the DB; CLI flags take major units. Use the existing helpers in <code>trip-finance/scripts/money.ts</code> (<code>formatMinor</code>, and the existing major→minor parse used by <code>log --amount</code>). Never introduce floats into stored amounts.</li>
+  <li>Dates/times are ISO-8601 strings compared lexicographically (existing convention, see <code>activeParticipants</code> in <code>trip-core/scripts/db.ts</code>).</li>
+  <li>Every mutation is journaled with <code>appendJournal(db, {at, actorId, action, entity, before, after})</code> from <code>trip-core/scripts/db.ts</code>. Follow the <code>entity</code>/<code>action</code> naming already used (e.g. <code>decision.objection</code>).</li>
+  <li>Tests use <strong><code>bun:test</code></strong> (never vitest — vitest cannot load <code>bun:sqlite</code>). Follow the style in the existing <code>test/</code> dirs: create a temp DB per test via the open helpers, inject time with an explicit <code>--at</code>/<code>now</code> argument, no reliance on wall-clock.</li>
+  <li>No new npm dependencies. No changes to <code>package.json</code>, <code>bun.lock</code>, the Dockerfile, or anything under <code>src/</code> (host). This pack is entirely inside the skills tree.</li>
+  <li>Existing schema is created with <code>CREATE TABLE IF NOT EXISTS</code> and live groups already have populated <code>trip.db</code> files. <span class="rule">All schema changes must be additive and idempotent</span> — new tables via <code>IF NOT EXISTS</code>, new columns via the <code>ensureColumn</code> helper (§1). Never rewrite or drop a table.</li>
+</ul>
+
+<h3>How to verify (the acceptance gate)</h3>
+<pre><code>bun test container/skills/trip-companion-skills/trip-core
+bun test container/skills/trip-companion-skills/trip-planning
+bun test container/skills/trip-companion-skills/trip-finance
+bun test container/skills/trip-companion-skills/trip-memory
+bun test container/skills/trip-companion-skills/trip-docs
+bun test container/skills/trip-companion-skills/trip-workflows</code></pre>
+<p>All suites must pass, including every pre-existing test (the finance golden/characterization/property tests are the regression canary — if they fail you broke split math). There is no separate tsc gate for the skills tree; <code>bun test</code> is the gate. Live containers pick up script changes on their next restart; no image rebuild is needed for skill files.</p>
+
+<div class="callout"><strong>Do not:</strong> add npm deps · touch generated-region hashing in trip-docs · change pragmas · do arithmetic in instruction text · break the finance golden tests · store major units · use <code>Date.now()</code> anywhere a test needs determinism (thread a <code>now</code>/<code>--at</code> parameter instead, defaulting to current time at the dispatcher edge only).</div>
+
+<h2 id="s1">§1 Shared helper: <code>ensureColumn</code> <span class="tag">trip-core</span></h2>
+<p>Several features below add columns to existing tables. Add one helper to <code>trip-core/scripts/db.ts</code> and use it everywhere; both packs share it.</p>
+<pre><code>/** Additive, idempotent column migration. `ddl` is the full column def, e.g. "upi_id TEXT". */
+export function ensureColumn(db: Database, table: string, column: string, ddl: string): void {
+  const cols = db.query(`PRAGMA table_info(${table})`).all() as { name: string }[];
+  if (!cols.some((c) => c.name === column)) {
+    db.exec(`ALTER TABLE ${table} ADD COLUMN ${ddl}`);
+  }
+}</code></pre>
+<p>Call sites live inside each skill's own migrate step (<code>migrateCore</code> / <code>migratePlanning</code> / <code>migrateFinance</code>) so any entry point that opens the DB heals the schema. New columns must default to NULL (SQLite ALTER limitation) — code must treat NULL as "feature not configured".</p>
+<p><strong>Tests</strong> (<code>trip-core/test/core.test.ts</code>, add cases): calling <code>ensureColumn</code> twice is a no-op; column exists after migrate on a DB created from the <em>old</em> DDL (simulate by creating the table without the column first).</p>
+
+<h2 id="s2">§2 Trip heartbeat <span class="tag">trip-core</span> — the keystone feature</h2>
+<p><strong>Why:</strong> every capability in the suite is pull-based. <code>trip.db</code> is full of time-shaped state (decision <code>commit_by</code>, <code>ticket_deadline</code>, trip dates) that nobody sweeps. NanoClaw's container agents already have a <code>schedule_task</code> MCP tool whose optional pre-task <code>script</code> hook runs bash first and only wakes the agent when the script prints <code>{"wakeAgent": true, "data": …}</code> (see <code>container/agent-runner/src/mcp-tools/scheduling.instructions.md</code>). The heartbeat is a deterministic CLI command shaped exactly for that contract.</p>
+
+<h3>2.1 New file <code>trip-core/scripts/heartbeat.ts</code> + dispatcher case</h3>
+<pre><code>trip-core heartbeat [--at &lt;ISO&gt;] [--edition morning|evening|auto]</code></pre>
+<ul>
+  <li><code>--at</code> defaults to the current time at the dispatcher edge; everything below receives it as a parameter (testability).</li>
+  <li><code>--edition auto</code> (default) resolves by stage: pre-trip stages → <code>planning</code> checks; <code>start_trip</code>/<code>on_trip</code> → <code>morning</code>; <code>post_trip</code> → <code>settlement</code>. Explicit <code>morning</code>/<code>evening</code> force the on-trip editions.</li>
+  <li>Output is <strong>always JSON on stdout, exactly one line-delimited object</strong>, matching the schedule-script contract:</li>
+</ul>
+<pre><code>{
+  "wakeAgent": boolean,
+  "data": {
+    "stage": "planning" | … ,
+    "edition": "planning" | "morning" | "evening" | "settlement",
+    "at": "&lt;the --at echo&gt;",
+    "sections": { … only non-empty sections present … }
+  }
+}</code></pre>
+
+<h3>2.2 Sections by edition (all computed from trip.db — exact queries)</h3>
+<table>
+<tr><th>Edition</th><th>Section key</th><th>Contents / rule</th></tr>
+<tr><td rowspan="5"><code>planning</code><br>(stages <code>planning</code>, <code>plan_ready</code>)</td>
+    <td><code>decisionsDue</code></td><td>Reuse the existing due-decision helper in <code>decisions.ts</code> (propose-mode decisions past <code>commit_by</code> with no objection in the tally blob — see ~line 164). Emit <code>{id, question, commitBy}</code>.</td></tr>
+<tr><td><code>pendingVoters</code></td><td>For each open <code>poll</code> decision: eligible voters = active members at <code>--at</code> whose <code>stage_participation</code> for the decision's stage is not <code>'out'</code>; pending = eligible minus members present in the tally blob's votes map (reuse the tally shape defined at the top of <code>decisions.ts</code>). Emit <code>{decisionId, question, pending:[{memberId, name}]}</code>. Skip decisions with zero pending.</td></tr>
+<tr><td><code>deadlinesSoon</code></td><td>Committed <code>itinerary_items</code> and <code>events</code> with <code>booking_required=1</code> and <code>ticket_deadline</code> within <code>DEADLINE_SOON_DAYS = 7</code> days of <code>--at</code> (not yet passed — passed ones are feasibility <em>errors</em>, not heartbeat items). Emit <code>{title, deadline}</code>.</td></tr>
+<tr><td><code>staleSources</code></td><td><code>recommendations</code> rows with <code>status='researching'</code> and <code>source_checked_at</code> older than <code>STALE_SOURCE_DAYS = 14</code>. Emit <code>{id, title, checkedAt}</code>.</td></tr>
+<tr><td><code>staleScratchpad</code></td><td>Count of open scratchpad notes older than 14 days (count + oldest topic only — don't dump them all).</td></tr>
+<tr><td rowspan="3"><code>morning</code><br>(on-trip)</td>
+    <td><code>today</code></td><td>The committed <code>days</code> row where <code>date = date(--at)</code>: theme, base place name, committed items ordered by slot (reuse <code>SLOT_ORDER</code> from <code>feasibility.ts</code>) with <code>{slot, start, title, placeName, travelMinutes}</code>, committed/shortlisted meal options per slot. If no committed day exists for today, emit <code>todayGap: true</code> instead (still wakes — the agent should flag the hole).</td></tr>
+<tr><td><code>bookingsToday</code></td><td>Committed items/events with <code>booking_required=1</code> and <code>ticket_deadline = date(--at)</code>.</td></tr>
+<tr><td><code>departures</code></td><td>Committed <code>legs</code> whose <code>depart</code> date is today: <code>{memberName, mode, carrier, depart, ref}</code>.</td></tr>
+<tr><td rowspan="2"><code>evening</code><br>(on-trip)</td>
+    <td><code>spendToday</code></td><td>Active (non-voided) expenses with <code>date(logged_at) = date(--at)</code>: count and per-currency totals (minor units + a <code>formatted</code> string via <code>formatMinor</code>).</td></tr>
+<tr><td><code>tomorrow</code></td><td>Committed day row for <code>date(--at)+1</code>: theme + first committed item title, or <code>gap: true</code>.</td></tr>
+<tr><td><code>settlement</code><br>(post-trip)</td>
+    <td><code>balances</code></td><td>Per-currency net balances and the minimal transfer plan, computed by the <em>existing</em> finance modules — import <code>balances.ts</code>/<code>settle.ts</code> from <code>../../trip-finance/scripts/</code> (cross-skill relative imports inside the suite are the established pattern; see finance's own imports from trip-core). Emit transfer edges <code>{fromName, toName, amountMinor, currency, formatted}</code>. When every balance is zero, emit <code>allSettled: true</code> instead.</td></tr>
+</table>
+
+<h3>2.3 wakeAgent rule</h3>
+<ul>
+  <li><code>planning</code>: wake iff at least one section is non-empty.</li>
+  <li><code>morning</code>: always wake while stage is <code>start_trip</code>/<code>on_trip</code> (the daily brief is the product), including the <code>todayGap</code> case.</li>
+  <li><code>evening</code>: wake iff <code>spendToday.count &gt; 0</code> or tomorrow has a committed day or gap while on-trip.</li>
+  <li><code>settlement</code>: wake iff there are outstanding balances, or iff all-settled <em>and</em> stage is still <code>post_trip</code> (one final wake proposing archive).</li>
+  <li>Stages <code>archived</code> / <code>cancelled</code> / <code>trip_complete</code>-with-nothing-due: <code>{"wakeAgent": false, "data": {…}}</code>. Never throw on an empty or unconfigured trip — print <code>wakeAgent:false</code> with <code>data.reason</code>.</li>
+</ul>
+
+<h3>2.4 Instruction edits</h3>
+<p>Append to <code>trip-core/SKILL.md</code> (a new <code>## Heartbeat</code> section) and a shorter always-on paragraph to <code>trip-core/instructions.md</code>. Required content, verbatim-adaptable:</p>
+<pre><code>## Heartbeat — the trip checks in on itself
+
+When a trip is set up (and again whenever the stage changes), make sure exactly the right
+scheduled tasks exist (use list_tasks / update_task — never duplicate):
+
+- pre-trip:  one daily task, script:
+    bun /app/skills/trip-core/scripts/trip-core.ts --db /workspace/agent/trip.db heartbeat
+  prompt: "Trip heartbeat fired. Read the JSON data. Nudge ONLY what it lists: overdue
+  propose-decisions (announce auto-commit and close them via $TC decision close), pending
+  voters (@mention them once, politely), booking deadlines this week, stale sources to
+  re-verify. One compact message; if a section is empty, don't mention it."
+- on-trip:   two daily tasks (~07:30 and ~21:00 local), same script with
+  --edition morning / --edition evening.
+  morning prompt: "Compose today's brief from data.today: the day's shape, timed items
+  with travel, meal options, bookings due today, departures. Friendly, short, no fluff."
+  evening prompt: "Compose the evening digest: today's spend (relay script numbers only),
+  tomorrow preview."
+- post-trip: one task every 3 days, default script, prompt: "Relay outstanding balances
+  with the settle plan; if data.allSettled, congratulate and propose archiving."
+- on archive/cancel: cancel the trip's heartbeat tasks.
+
+The script decides whether to wake you (wakeAgent) — trust it. Never re-derive its
+numbers; relay them.</code></pre>
+<p>Also add one line to the stage-transition part of SKILL.md: "After any confirmed stage change, reconcile heartbeat tasks per the Heartbeat section."</p>
+
+<h3>2.5 Tests — new file <code>trip-core/test/heartbeat.test.ts</code></h3>
+<ol>
+  <li>Unconfigured DB → <code>wakeAgent:false</code>, has <code>data.reason</code>, exit code 0.</li>
+  <li>Planning stage, one propose decision past <code>commit_by</code> without objection → appears in <code>decisionsDue</code>; with an objection logged → absent; future <code>commit_by</code> → absent.</li>
+  <li>Poll with 3 eligible members, 1 voted, 1 marked <code>out</code> for the stage → <code>pendingVoters</code> lists exactly the 1 remaining.</li>
+  <li>Deadline at <code>--at</code>+3d → in <code>deadlinesSoon</code>; +10d → absent; −1d → absent (it's a feasibility error, not a heartbeat item).</li>
+  <li>All sections empty → <code>wakeAgent:false</code>.</li>
+  <li>On-trip morning with a committed day (2 items, ordered by slot) → <code>today.items</code> in slot order; no committed day → <code>todayGap:true</code> and still <code>wakeAgent:true</code>.</li>
+  <li>Evening: two expenses logged "today" at <code>--at</code>, one voided → count 1, correct per-currency totals; zero expenses and no tomorrow day → <code>wakeAgent:false</code>.</li>
+  <li>Post-trip with a known 3-member ledger → transfer edges match <code>settle</code>'s plan exactly (import and compare, don't re-implement); fully settled → <code>allSettled:true</code>.</li>
+  <li>Archived stage → <code>wakeAgent:false</code> for every edition.</li>
+  <li>Determinism: same DB + same <code>--at</code> → byte-identical JSON.</li>
+</ol>
+
+<h2 id="s3">§3 Feasibility upgrades <span class="tag">trip-planning</span></h2>
+<p><strong>Why:</strong> <code>feasibility.ts</code> checks only intra-day slack, night coverage, budget cap, and passed deadlines. Three real-world failure modes are unguarded: arriving at a closed attraction, destination handoffs with no transport, and days that exceed the group's pace.</p>
+
+<h3>3.1 Opening hours</h3>
+<ul>
+  <li>Schema: <code>ensureColumn(db, 'places', 'open_hours', 'open_hours TEXT')</code> in <code>migratePlanning</code>. Format v1: a single daily range string <code>"HH:MM-HH:MM"</code> (e.g. <code>"09:00-17:00"</code>). Anything unparseable is ignored with a warning (never an error).</li>
+  <li>CLI: add <code>place set --id &lt;n&gt; [--open-hours "09:00-17:00"] [--name …] [--map-url …]</code> to <code>places.ts</code> (a general field-setter; journal the change as <code>place.set</code>).</li>
+  <li>Check (in <code>checkPlan</code>): for every <em>committed</em> itinerary item with a <code>place_id</code> whose place has parseable <code>open_hours</code>, and which has <code>start</code> and/or <code>end</code> times: <code>start</code> before open or <code>end</code> after close → <strong>error</strong> <code>"«title» is outside «place» hours (09:00-17:00)"</code>. Item has the place but no times → <strong>warning</strong> <code>"«title»: place has opening hours but item is untimed"</code>.</li>
+</ul>
+
+<h3>3.2 Destination handoffs</h3>
+<p>For each consecutive pair of <em>committed</em> destinations (by <code>order_index</code>) that both have committed stays: let <code>out</code> = previous stay's <code>check_out</code>, <code>in</code> = next stay's <code>check_in</code>. Rules (all <strong>warnings</strong> — data is often thin here and warnings never block):</p>
+<ul>
+  <li>No committed <code>transport_hops</code> row connecting the two destinations' places (either direction of <code>from_place_id</code>/<code>to_place_id</code> matching the stays' places) → <code>"no committed transport between «A» and «B» (checkout 2026-08-17)"</code>.</li>
+  <li>A connecting hop exists but its <code>depart</code> date ≠ <code>check_out</code> date → <code>"hop departs 2026-08-18 but «A» checkout is 2026-08-17"</code>.</li>
+  <li><code>check_out</code> date &gt; <code>check_in</code> date of the next stay (overlap/impossible order) → warning naming both.</li>
+</ul>
+
+<h3>3.3 Pace cap</h3>
+<ul>
+  <li>Schema: <code>ensureColumn(db, 'trip', 'pace_cap_minutes', 'pace_cap_minutes INTEGER')</code>.</li>
+  <li>CLI: <code>trip-planning config set-pace --minutes 300 --by &lt;id&gt;</code> (journaled; <code>--minutes 0</code> clears it → NULL). Also print it in <code>plan show</code>'s header when set.</li>
+  <li>Check: per committed day, load = Σ <code>travel_minutes</code> of committed items + Σ (<code>end</code>−<code>start</code>) for items with both times. If cap set and load &gt; cap → <strong>warning</strong> <code>"day 2026-08-15 load ≈ 6h20m exceeds pace cap 5h"</code>.</li>
+  <li><strong>Bridge from memory (instruction, not code)</strong> — append to <code>trip-planning/instructions.md</code>: <em>"When trip-memory holds a pace/mobility preference (e.g. 'walks ≤ 5km', 'no packed days'), translate it once into a deterministic cap via <code>$TP config set-pace</code> and tell the group what you set. Feasibility then protects it automatically; never eyeball pace yourself."</em></li>
+</ul>
+
+<h3>3.4 Tests — extend <code>trip-planning/test/feasibility.test.ts</code></h3>
+<ol>
+  <li>Committed item 18:00–19:00 at a place open 09:00–17:00 → 1 error; 10:00–11:00 → clean; malformed <code>open_hours "9ish-late"</code> → no error, one warning at most, never throws.</li>
+  <li>Untimed committed item at a place with hours → warning.</li>
+  <li>Two committed destinations w/ stays and no hop → handoff warning; add committed hop on the checkout date → clean; hop dated +1 day → date-mismatch warning; overlapping stays → order warning.</li>
+  <li>Pace: cap 300, day with 200m travel + 90m timed activity → clean; +150m more travel → warning; no cap set → never warns; candidate (non-committed) items excluded from load.</li>
+  <li>Regression: existing four checks still pass untouched (run whole suite).</li>
+  <li><code>plan validate</code> still blocks on errors and passes with only warnings (extend <code>validate.test.ts</code> with one opening-hours error case).</li>
+</ol>
+
+<h2 id="s4">§4 Rain alternates &amp; day shuffle <span class="tag">trip-planning</span></h2>
+<p><strong>Why:</strong> on-trip replanning ("it's pouring", "we're 2h behind") is where deterministic recomputation beats improvisation. Two pieces: stored alternates, and a transactional dry-run shuffle.</p>
+
+<h3>4.1 Schema + CLI</h3>
+<ul>
+  <li><code>ensureColumn(db, 'itinerary_items', 'alternate_for_item_id', 'alternate_for_item_id INTEGER')</code>.</li>
+  <li><code>item add … --alternate-for &lt;itemId&gt;</code>: validates the target exists; forces <code>status='candidate'</code> (an alternate is never independently committed); inherits the target's <code>day_id</code> and <code>slot</code> unless explicitly given. Reject <code>--alternate-for</code> pointing at another alternate (one level only).</li>
+  <li><code>plan show</code>: render an alternate inline under its primary as <code>↩ alt: «title»</code>.</li>
+</ul>
+
+<h3>4.2 <code>day shuffle</code></h3>
+<pre><code>trip-planning day shuffle --date 2026-08-15 --drop &lt;itemId&gt; [--commit] [--by &lt;memberId&gt;]</code></pre>
+<ul>
+  <li>Semantics: mark the dropped committed item <code>rejected</code>; if it has an alternate, promote that alternate to <code>committed</code> in the same slot; then run <code>checkPlan</code> and print (a) the day's new board and (b) that day's errors/warnings only.</li>
+  <li><strong>Dry-run by default.</strong> Implementation: <code>BEGIN</code> → apply → compute board + feasibility → <code>ROLLBACK</code> unless <code>--commit</code>, in which case <code>COMMIT</code> and journal two entries (<code>item.reject</code>, <code>item.promote_alternate</code>) with <code>--by</code> as actor.</li>
+  <li>Dropping an item with no alternate is legal — the day simply compacts; say so in the output (<code>"no alternate stored — slot now open"</code>).</li>
+  <li>Errors: date has no committed day → exit 1 with message; item not on that date or not committed → exit 1.</li>
+</ul>
+
+<h3>4.3 Instruction edit</h3>
+<p>Append to <code>trip-planning/SKILL.md</code> (Building the plan section): <em>"For weather-risky or bookable items, store a plan-B at planning time with <code>--alternate-for</code>. On-trip, when something is dropped ('rained out', 'running late'), run <code>day shuffle --drop</code> first WITHOUT <code>--commit</code>, play the proposed day back to the group, and only re-run with <code>--commit</code> after a yes."</em></p>
+
+<h3>4.4 Tests — new file <code>trip-planning/test/shuffle.test.ts</code></h3>
+<ol>
+  <li><code>--alternate-for</code> forces candidate status and inherits day/slot; chained alternate rejected; target must exist.</li>
+  <li>Dry-run: output contains promoted alternate, DB unchanged after the call (statuses re-read).</li>
+  <li><code>--commit</code>: dropped → rejected, alternate → committed, both journal entries present with actor.</li>
+  <li>Drop without alternate → slot-open message, item rejected on commit.</li>
+  <li>Promoted alternate that breaks slack (travel_minutes too big) → the printed feasibility block contains the day's error.</li>
+  <li>Bad date / non-committed item → exit code 1, no mutation.</li>
+</ol>
+
+<h2 id="s5">§5 Itemised splits <span class="tag">trip-finance</span></h2>
+<p><strong>Why:</strong> the OCR eval fixtures already include itemised bills (<code>eval/fixtures/synthetic/clean/bill-itemised-*.png</code>) but the ledger only stores a total + one rule. "Raj didn't drink — split the beer separately" is the single most common real-world split correction.</p>
+
+<h3>5.1 Design decision (load-bearing)</h3>
+<p>Items are stored for audit/display, but <strong><code>expense_shares</code> remains the only thing balances read</strong>. Itemisation is a new way to <em>compute</em> shares, aggregated per member at log time. Balances, settle, void, journal are untouched downstream — this is what keeps the golden tests green.</p>
+
+<h3>5.2 Schema + CLI</h3>
+<pre><code>CREATE TABLE IF NOT EXISTS expense_items (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  expense_id INTEGER NOT NULL REFERENCES expenses(id),
+  label TEXT NOT NULL,
+  amount INTEGER NOT NULL,            -- minor units
+  participants_json TEXT NOT NULL     -- "[2,3]" or "\"all\""
+);</code></pre>
+<pre><code>$TF log --desc "Dinner" --amount 4500 --payer 5 --by 2 \
+   --items '[{"label":"Beer","amount":600,"members":[2,5]},
+             {"label":"Food","amount":3900,"members":"all"}]'</code></pre>
+<ul>
+  <li>Item amounts are <strong>major units in the expense currency</strong> (same convention as <code>--amount</code>); converted with the same parser.</li>
+  <li>Validation (all → exit 1, nothing written): items must be a non-empty array; Σ item amounts must equal <code>--amount</code> exactly (message states both sums); every member id must resolve to an <em>active member</em> at <code>logged_at</code> (reuse <code>activeMembers</code>); <code>"all"</code> means <code>activeParticipants</code> at <code>logged_at</code>; an item's member list may not be empty. <code>--items</code> is mutually exclusive with <code>--rule</code>/<code>--custom</code>.</li>
+  <li>Computation: per item, equal split among its members using the <strong>same largest-remainder rounding already in <code>split.ts</code></strong> (call the existing function — do not re-implement). Aggregate per member across items → write <code>expense_shares</code>. Store <code>split_rule='itemised'</code> and the normalized items (minor units, resolved member ids) in <code>custom_spec</code>; also insert the <code>expense_items</code> rows.</li>
+  <li><code>$TF expense &lt;id&gt;</code>: when itemised, print each item line (<code>label · amount · members</code>) then the per-member aggregate. <code>--json</code> includes an <code>items</code> array.</li>
+  <li><code>$TF edit &lt;id&gt; --items '…'</code>: full replacement — validate, delete old <code>expense_items</code>, recompute shares, journal before/after (existing edit journaling pattern). Editing <code>--amount</code> alone on an itemised expense → exit 1 telling the user to re-supply <code>--items</code> (the invariant Σitems = total must hold).</li>
+  <li><code>void</code> unchanged (shares ignored when voided already handles it).</li>
+</ul>
+
+<h3>5.3 Instruction edits</h3>
+<p>SKILL.md "Logging an expense": add the flag to the command block, plus: <em>"When a bill photo is itemised and someone asks to split it unevenly ('Raj skipped the drinks'), build <code>--items</code>: read line items from the image, group them, and play back per-person amounts before committing — the itemised playback must show each item group and who's in it."</em> Add a matching line to the image-handling section: itemised bill + uneven-split request → <code>--source bill-image</code> + <code>--items</code>.</p>
+
+<h3>5.4 Tests — new file <code>trip-finance/test/itemised.test.ts</code></h3>
+<ol>
+  <li>Sum mismatch → exit 1, no expense row, no items rows.</li>
+  <li>Two items (one <code>"all"</code>, one subset) → <code>expense_shares</code> aggregate equals the total exactly; the excluded member's share comes only from the "all" item.</li>
+  <li>Rounding property (mirror <code>properties.test.ts</code> style): for 200 random itemisations, Σ shares = total, and per-item rounding matches <code>split.ts</code> equal-split output.</li>
+  <li><code>--items</code> + <code>--rule</code> → exit 1. Empty member list → exit 1. Unknown member id → exit 1. Member who joined after <code>logged_at</code> → exit 1.</li>
+  <li><code>expense &lt;id&gt;</code> human + <code>--json</code> output includes items; balances over a mixed ledger (plain + itemised) settle to zero net.</li>
+  <li>Edit-replace recomputes; <code>edit --amount</code> without <code>--items</code> on an itemised row → exit 1; void hides it from balances.</li>
+  <li><strong>Regression:</strong> full existing finance suite passes (golden + characterization + properties).</li>
+</ol>
+
+<h2 id="s6">§6 Budget burn <span class="tag">trip-finance</span></h2>
+<p><strong>Why:</strong> planning owns the budget cap; finance owns actuals; they never meet. <code>burn</code> is the join — and the evening/post-trip heartbeat's best content.</p>
+
+<h3>6.1 CLI</h3>
+<pre><code>$TF burn [--at &lt;ISO&gt;] [--json]</code></pre>
+<p>Reads <code>trip.start_date / end_date / total_budget / base_currency</code> and active expenses. Output fields:</p>
+<ul>
+  <li><code>tripDays</code> (end−start in days, inclusive of start), <code>daysElapsed</code> (clamped to [0, tripDays]; day counting starts at 1 on start_date), <code>timePct</code>.</li>
+  <li><code>spent</code>: per-currency totals of active expenses (minor + formatted).</li>
+  <li>When <code>total_budget</code> is set: <code>baseSpent</code> (base-currency expenses only), <code>budgetPct</code>, <code>remaining</code>; foreign-currency spend listed separately with an explicit note that it is <em>not</em> converted (house rule: never convert silently). When budget is NULL: report spend only, <code>budget: null</code>.</li>
+  <li><code>dailyRate</code> = baseSpent / max(1, daysElapsed); <code>projection</code> = dailyRate × tripDays; <code>projectionOver</code> flag when projection &gt; budget.</li>
+  <li><code>topExpenses</code>: top 3 active by amount <code>{desc, formatted, payerName}</code>.</li>
+  <li>Human output is one compact block, e.g. <code>Day 3/5 (60% time) · spent ₹34,200 of ₹50,000 (68%) · pace ₹11,400/day → projects ₹57,000 (OVER by ₹7,000)</code>.</li>
+</ul>
+<p>Edge rules: before start_date → daysElapsed 0, no projection; after end_date → daysElapsed = tripDays, projection = actual; missing trip dates → spend-only mode with <code>data.reason</code>. Wire <code>burn</code>'s JSON into the heartbeat evening + settlement editions as an extra section <code>burn</code> (import the module, don't shell out).</p>
+
+<h3>6.2 Instruction edit</h3>
+<p>SKILL.md, after the balance block: <em>"For 'how are we doing on budget' / mid-trip money questions, run <code>$TF burn</code> and relay its line — never estimate pace or projection yourself."</em></p>
+
+<h3>6.3 Tests — new file <code>trip-finance/test/burn.test.ts</code></h3>
+<ol>
+  <li>Known fixture (5-day trip, budget 50,000.00, expenses on days 1–3 incl. one voided, one foreign-currency) → exact daysElapsed/timePct/baseSpent/budgetPct/dailyRate/projection numbers; foreign spend excluded from baseSpent and listed separately.</li>
+  <li><code>--at</code> before start → no projection; after end → projection = actual; no budget → <code>budget:null</code>; no dates → reason string, exit 0.</li>
+  <li>topExpenses ordering and tie stability (by amount desc, then id asc).</li>
+</ol>
+
+<h2 id="s7">§7 UPI deep links in settle <span class="tag">trip-finance</span></h2>
+<h3>7.1 Schema + CLI</h3>
+<ul>
+  <li><code>ensureColumn(db, 'members', 'upi_id', 'upi_id TEXT')</code> (in <code>migrateFinance</code> or core migrate — pick core since members is a core table).</li>
+  <li>Extend the existing <code>set-member</code> command with <code>--upi &lt;vpa&gt;</code> (journaled; <code>--upi ""</code> clears). Show it in <code>$TF members</code> output as <code>upi:✓</code> (never print the raw VPA in group-facing listings — it's semi-private; full VPA only in the link itself).</li>
+  <li><code>$TF settle --links</code>: for each transfer edge where the <strong>payee</strong> has <code>upi_id</code> and currency is <code>INR</code>, append a link line:<br>
+  <code>upi://pay?pa=&lt;vpa&gt;&amp;pn=&lt;URL-encoded payee name&gt;&amp;am=&lt;major, 2dp&gt;&amp;cu=INR</code><br>
+  plus a copyable fallback (<code>«vpa» · ₹2,000.00</code>) since not all WhatsApp clients linkify <code>upi://</code>. Edges without a payee VPA or non-INR get <code>（no UPI on file / non-INR — settle manually）</code>.</li>
+</ul>
+<h3>7.2 Instruction edit</h3>
+<p>SKILL.md settle section: <em>"On 'settle up', prefer <code>$TF settle --links</code> so each transfer is one tap. Offer once per trip to collect UPI IDs (<code>set-member --upi</code>) from whoever is missing one — in DM-like phrasing, don't press."</em></p>
+<h3>7.3 Tests — extend <code>trip-finance/test/golden.test.ts</code> or new <code>settle-links.test.ts</code></h3>
+<ol>
+  <li>Link format exact-match for a known edge (encoding of spaces in <code>pn</code>, amount always 2dp major units).</li>
+  <li>Payee without VPA → fallback text, no <code>upi://</code>; USD edge → skipped with note; <code>--links</code> absent → output byte-identical to before (regression).</li>
+  <li><code>set-member --upi</code> roundtrip + clear; members listing masks the VPA.</li>
+</ol>
+
+<h2 id="s8">§8 Person-level memory export/import <span class="tag">trip-memory</span></h2>
+<p><strong>Why:</strong> memory is per-trip (<code>memory.db</code> per group) but "Bob's pace" is true on every trip. Smallest thing that compounds: a portable export keyed on a person, and a provenance-preserving import into the next trip's store. (The operator/agent moves the file between group workspaces; no cross-group plumbing.)</p>
+<h3>8.1 CLI (extend <code>trip-memory/scripts/trip-memory.ts</code>, following its existing storage layer)</h3>
+<pre><code>$TM export-person --person "Bob" --out /workspace/agent/exports/bob-memories.json
+$TM import --file &lt;path&gt; --trip &lt;id&gt; --by "&lt;sender&gt;"</code></pre>
+<ul>
+  <li><code>export-person</code>: all <em>active</em> memories whose tags include the person's name (tags already carry member names per the remember convention). Output JSON: <code>{version:1, person, exportedAt, memories:[{title, content, category, tags, importance, provenance, createdAt}]}</code>. Empty result → exit 0, <code>memories:[]</code>.</li>
+  <li><code>import</code>: inserts each as provenance <code>auto</code> (never <code>owner-approved</code> — the new trip's owner re-curates), re-tagged with <code>trip:&lt;id&gt;</code> + <code>imported</code> and stripped of the old <code>trip:*</code> tag. <strong>Dedupe:</strong> skip when an active memory with identical title+content already exists; report <code>imported N, skipped M</code>. Each import journals/echoes the same <code>MEMORY SAVED</code> receipt lines the store already emits.</li>
+</ul>
+<h3>8.2 Instruction edit</h3>
+<p>SKILL.md, new short section "Carrying memory to the next trip": <em>"When a new trip starts with returning travellers, offer once: export each returning person's memories from the old trip's store and import here; everything arrives as unapproved (<code>auto</code>) and the owner prunes with approve/forget. Never import without telling the group what came over."</em></p>
+<h3>8.3 Tests — extend <code>trip-memory/test/cli.test.ts</code></h3>
+<ol>
+  <li>Roundtrip: remember 3 (2 tagged Bob, 1 not) → export-person Bob has exactly 2 → import into a fresh DB → both present, provenance <code>auto</code>, tags contain <code>imported</code> + new <code>trip:&lt;id&gt;</code>, old trip tag gone.</li>
+  <li>Dedupe: import twice → second reports skipped 2, no duplicate rows.</li>
+  <li>Rejected/forgotten memories are not exported. Malformed file / wrong <code>version</code> → exit 1, nothing written.</li>
+</ol>
+
+<h2 id="s9">§9 Vendor-chase payloads from the DB <span class="tag">trip-workflows</span></h2>
+<p><strong>Why:</strong> <code>vendor payload --missing "…"</code> is hand-typed today, but the plan already knows which booking fields are empty.</p>
+<ul>
+  <li><code>ensureColumn(db, 'stays', 'ref', 'ref TEXT')</code> (legs already have <code>ref</code>), and add <code>--ref</code> to <code>stay add</code>/a stay field-setter in trip-planning.</li>
+  <li>New flags on <code>vendor payload</code>: <code>--db &lt;path&gt; --from stays:&lt;id&gt;</code> (or <code>legs:&lt;id&gt;</code>). Derivation table: <code>ref</code> NULL → "confirmation number"; stays <code>check_in</code> NULL → "check-in time"; legs <code>depart</code>/<code>arrive</code> NULL → "departure/arrival time"; <code>booking_url</code> NULL → "booking link/receipt". Derived list is printed and still overridable by an explicit <code>--missing</code>. Row not found or nothing missing → exit 1 with a clear message ("nothing to chase — all fields present").</li>
+  <li>Tests (extend <code>trip-workflows/test/trip-workflows.test.ts</code>): stay with NULL ref+check_in derives both phrases; fully-populated row → exit 1; explicit <code>--missing</code> wins; legs variant.</li>
+</ul>
+
+<h2 id="s10">§10 Delivery checklist (in order)</h2>
+<ol>
+  <li>§1 <code>ensureColumn</code> + tests.</li>
+  <li>§2 heartbeat (new module, dispatcher case, SKILL.md + instructions.md edits, tests).</li>
+  <li>§3 feasibility (schema, <code>place set</code>, <code>config set-pace</code>, three checks, tests).</li>
+  <li>§4 alternates + shuffle (schema, item add flag, shuffle cmd, tests).</li>
+  <li>§5 itemised splits (table, log/edit/expense changes, tests, finance regression).</li>
+  <li>§6 burn (module + heartbeat wiring + tests).</li>
+  <li>§7 UPI links (column, set-member flag, settle --links, tests).</li>
+  <li>§8 memory export/import (two commands, tests).</li>
+  <li>§9 workflows --from (column, derivation, tests).</li>
+  <li>Run all six suites (§0). Then update each touched skill's SKILL.md <em>description</em> frontmatter only if a new user-visible trigger phrase is needed (heartbeat: no — it's scheduled, not user-triggered; shuffle: add "rained out / reshuffle today" to trip-planning's description; burn: add "are we over budget so far" to trip-finance's description).</li>
+  <li>Do NOT commit — leave the working tree for review.</li>
+</ol>
+
+<p class="meta">End of pack 1. The Lifecycle Expansion pack (<code>docs/trip-lifecycle-expansion-pack.html</code>) assumes §1 and §2 of this document exist.</p>
+
+</body>
+</html>

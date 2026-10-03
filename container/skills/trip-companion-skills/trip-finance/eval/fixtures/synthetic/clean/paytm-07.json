@@ -1,0 +1,12 @@
+{
+  "id": "paytm-07",
+  "kind": "upi",
+  "style": "paytm",
+  "amount": "6111.00",
+  "currency": "INR",
+  "payer": "Dev Anand",
+  "payee_or_merchant": "Vikram Iyer",
+  "txn_id": "T20260357286892826",
+  "degradation": null,
+  "expected": "extract"
+}

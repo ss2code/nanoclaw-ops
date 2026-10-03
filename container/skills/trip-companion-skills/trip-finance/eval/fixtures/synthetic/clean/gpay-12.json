@@ -1,0 +1,12 @@
+{
+  "id": "gpay-12",
+  "kind": "upi",
+  "style": "gpay",
+  "amount": "14064.86",
+  "currency": "INR",
+  "payer": null,
+  "payee_or_merchant": "Lakshmi Iyer",
+  "txn_id": "T20260718678375549",
+  "degradation": null,
+  "expected": "extract"
+}

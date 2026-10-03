@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Trip Suite Improvement Pack — Usage Guide</title>
+<style>body{font:16px/1.55 system-ui,sans-serif;max-width:880px;margin:2rem auto;padding:0 1rem;color:#1e293b}h1,h2{color:#0f766e}code,pre{font-family:ui-monospace,monospace}pre{background:#f1f5f9;padding:1rem;border-radius:.5rem;overflow:auto}li{margin:.35rem 0}</style></head><body>
+<h1>Trip Suite Improvement Pack — Usage Guide</h1>
+<p>The scripts are authoritative: agents relay computed results rather than doing date, feasibility, or money calculations in chat.</p>
+<h2>Daily operation</h2><ul>
+<li>After every confirmed stage change, reconcile heartbeat tasks: one daily pre-trip task, two on-trip tasks (<code>morning</code> and <code>evening</code>), and one post-trip task every three days. The CLI JSON <code>wakeAgent</code> is authoritative.</li>
+<li>Keep venue hours, pace, alternates, booking references, and UPI opt-in in <code>trip.db</code>. The migrations are additive and safe for existing trips.</li>
+<li>Before changing an on-trip day, dry-run <code>trip-planning day shuffle</code>; share its board and feasibility result, then use <code>--commit --by &lt;member&gt;</code> only after approval.</li>
+</ul>
+<h2>Common commands</h2><pre><code>TC="bun /app/skills/trip-core/scripts/trip-core.ts --db /workspace/agent/trip.db"
+TP="bun /app/skills/trip-planning/scripts/trip-planning.ts --db /workspace/agent/trip.db"
+TF="bun /app/skills/trip-finance/scripts/trip-finance.ts --db /workspace/agent/trip.db"
+
+$TC heartbeat --edition morning
+$TP place set --id 8 --open-hours "09:00-17:00"
+$TP config set-pace --minutes 300 --by 1
+$TP day shuffle --date 2026-08-15 --drop 23
+$TF burn
+$TF settle --links</code></pre>
+<p>For an uneven receipt, use <code>$TF log --items …</code>; item amounts must exactly match the total and every named person must be active on the expense date. For returning travellers, export tagged preferences from the old memory store and import them into the new one; imports remain <code>auto</code> until the new trip owner curates them.</p>
+<p>Vendor workflows can derive missing fields from <code>stays:&lt;id&gt;</code> or <code>legs:&lt;id&gt;</code> with <code>--db … --from …</code>; explicit <code>--missing</code> overrides derivation. All outbound messages remain draft-and-review operations.</p>
+</body></html>

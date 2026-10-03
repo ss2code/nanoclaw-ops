@@ -1,0 +1,12 @@
+{
+  "id": "phonepe-20",
+  "kind": "upi",
+  "style": "phonepe",
+  "amount": "15645.00",
+  "currency": "INR",
+  "payer": null,
+  "payee_or_merchant": "Tara Kapoor",
+  "txn_id": "T20266980924860707",
+  "degradation": null,
+  "expected": "extract"
+}

@@ -1,0 +1,10 @@
+{
+  "name": "artifact-deploy-skill",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Generic artifact deployment helpers for NanoClaw agent groups",
+  "scripts": {
+    "test": "bun test"
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "id": "phonepe-19-crop",
+  "kind": "upi",
+  "style": "phonepe",
+  "amount": "7875.64",
+  "currency": "INR",
+  "payer": null,
+  "payee_or_merchant": "Raj Mehta",
+  "txn_id": "T20268299130945511",
+  "degradation": "crop",
+  "expected": "extract-or-clarify"
+}

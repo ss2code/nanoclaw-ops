@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Trip Lifecycle Expansion Pack — Implementation Spec</title>
+<style>
+  :root { --fg:#1a1a1a; --bg:#ffffff; --muted:#666; --line:#e2e2e2; --code-bg:#f6f6f4; --accent:#8a4baf; --warn-bg:#fff7e6; --warn-line:#e8c56a; }
+  @media (prefers-color-scheme: dark) {
+    :root { --fg:#e8e8e8; --bg:#161616; --muted:#9a9a9a; --line:#333; --code-bg:#222220; --accent:#c08ae0; --warn-bg:#2e2712; --warn-line:#8a6d1f; }
+  }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color:var(--fg); background:var(--bg); max-width:940px; margin:2rem auto; padding:0 1.2rem 6rem; line-height:1.55; }
+  h1 { font-size:1.7rem; border-bottom:3px solid var(--accent); padding-bottom:.4rem; }
+  h2 { font-size:1.25rem; margin-top:2.6rem; border-bottom:1px solid var(--line); padding-bottom:.25rem; }
+  h3 { font-size:1.02rem; margin-top:1.6rem; color:var(--accent); }
+  code, pre { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size:.86em; }
+  code { background:var(--code-bg); padding:.1em .35em; border-radius:4px; }
+  pre { background:var(--code-bg); border:1px solid var(--line); border-radius:8px; padding:.8rem 1rem; overflow-x:auto; line-height:1.45; }
+  pre code { background:none; padding:0; }
+  table { border-collapse:collapse; width:100%; margin:1rem 0; font-size:.92em; }
+  th, td { border:1px solid var(--line); padding:.4rem .6rem; text-align:left; vertical-align:top; }
+  th { background:var(--code-bg); }
+  .meta { color:var(--muted); font-size:.9em; }
+  .callout { background:var(--warn-bg); border:1px solid var(--warn-line); border-radius:8px; padding:.7rem 1rem; margin:1rem 0; }
+  .rule { font-weight:600; }
+  ul li, ol li { margin:.25rem 0; }
+  .tag { display:inline-block; font-size:.75em; font-weight:600; padding:.05em .5em; border-radius:10px; background:var(--code-bg); border:1px solid var(--line); color:var(--muted); margin-left:.4rem; vertical-align:middle; }
+</style>
+</head>
+<body>
+
+<h1>Trip Lifecycle Expansion Pack — Implementation Spec</h1>
+<p class="meta">Spec date: 2026-07-10 · Target: <code>container/skills/trip-companion-skills/</code> in the NanoClaw repo · <strong>Hard dependency:</strong> the Improvement Pack (<code>docs/trip-suite-improvement-pack.html</code>) §1 <code>ensureColumn</code> and §2 heartbeat must exist. If they don't, implement those two sections first, exactly per that spec.</p>
+
+<p>The existing suite covers planning, deciding, and money. This pack covers the rest of a group vacation's life: preparation (packing, shared gear, T-minus readiness), travel day (concierge card, roll-call), on-trip living (stay/safety cards), memories (diary, photo indexing, the recap document), and closure (settlement drive, preference distillation). Seven features, each with schema, CLI, behavior, instruction edits, and tests — implementable in one pass.</p>
+
+<h2 id="s0">§0 Ground rules</h2>
+<p>All conventions from the Improvement Pack §0 apply verbatim: bun:sqlite with <code>$name</code> params, <code>journal_mode=DELETE</code> untouched, money in integer minor units via <code>trip-finance/scripts/money.ts</code>, ISO strings compared lexicographically, every mutation journaled via <code>appendJournal</code>, additive-only migrations (<code>IF NOT EXISTS</code> + <code>ensureColumn</code>), <code>bun:test</code> only, no new npm deps, no host-side (<code>src/</code>) changes, model judges / scripts compute. Acceptance gate:</p>
+<pre><code>bun test container/skills/trip-companion-skills/trip-core
+bun test container/skills/trip-companion-skills/trip-planning
+bun test container/skills/trip-companion-skills/trip-finance
+bun test container/skills/trip-companion-skills/trip-docs
+bun test container/skills/trip-companion-skills/trip-memory
+bun test container/skills/trip-companion-skills/trip-workflows</code></pre>
+<div class="callout"><strong>Heartbeat extension points.</strong> Several features below add sections to the heartbeat JSON. Implement each as an optional section producer in <code>trip-core/scripts/heartbeat.ts</code>: a function <code>(db, atIso) =&gt; sectionValue | null</code> registered per edition. Sections that return null are omitted; a non-empty new section counts toward <code>wakeAgent</code> under the same rules as the base sections. Keep each producer's queries in this pack's owning module and import it from heartbeat.ts (same cross-skill relative-import pattern finance/planning already use).</div>
+
+<h2 id="s1">§1 Checklists engine: packing, shared gear, readiness <span class="tag">trip-core</span></h2>
+<p><strong>Why:</strong> the classic group failure — three speakers, zero first-aid kits, and someone who never did online check-in. One small engine covers all three list shapes.</p>
+
+<h3>1.1 Schema (add to <code>migrateCore</code>)</h3>
+<pre><code>CREATE TABLE IF NOT EXISTS checklists (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  kind TEXT NOT NULL,            -- 'packing' | 'gear' | 'readiness'
+  title TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  created_by INTEGER REFERENCES members(id)
+);
+
+CREATE TABLE IF NOT EXISTS checklist_items (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  checklist_id INTEGER NOT NULL REFERENCES checklists(id),
+  label TEXT NOT NULL,
+  due_date TEXT,                 -- readiness items: absolute ISO date
+  per_member INTEGER NOT NULL DEFAULT 0,   -- 1 = each member confirms individually
+  claimed_by INTEGER REFERENCES members(id),  -- gear: who's bringing it
+  status TEXT NOT NULL DEFAULT 'open',     -- open | done | dropped
+  note TEXT,
+  created_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS checklist_confirmations (
+  item_id INTEGER NOT NULL REFERENCES checklist_items(id),
+  member_id INTEGER NOT NULL REFERENCES members(id),
+  at TEXT NOT NULL,
+  PRIMARY KEY (item_id, member_id)
+);</code></pre>
+
+<h3>1.2 CLI (new module <code>trip-core/scripts/checklists.ts</code>, cases in the dispatcher)</h3>
+<pre><code>$TC gear add --label "Bluetooth speaker" [--note …] --by &lt;id&gt;
+$TC gear claim &lt;itemId&gt; --member &lt;id&gt;         # exit 1 if already claimed by someone else
+$TC gear unclaim &lt;itemId&gt; --member &lt;id&gt;       # only the claimer (or --force) may unclaim
+$TC gear board                                 # unclaimed first, then claimed w/ names
+$TC packing seed --template beach|hill|city --by &lt;id&gt;   # idempotent by label
+$TC packing add --label "Snorkel gear" [--per-member] --by &lt;id&gt;
+$TC packing board
+$TC readiness seed --by &lt;id&gt;                   # T-minus items from trip.start_date (below)
+$TC readiness confirm &lt;itemId&gt; --member &lt;id&gt;   # per_member items: one row per member
+$TC readiness done &lt;itemId&gt; --by &lt;id&gt;          # group-level items
+$TC readiness due [--at &lt;ISO&gt;]                 # due/overdue items + per-member gaps
+$TC check drop &lt;itemId&gt; --by &lt;id&gt;              # any list: status → dropped</code></pre>
+<p>Behavior rules:</p>
+<ul>
+  <li>One checklist row per kind, auto-created on first use (<code>kind='gear'</code>, title "Shared gear", etc.). All writes journaled (<code>checklist.claim</code>, <code>checklist.confirm</code>, …) with actor.</li>
+  <li><strong>Gear claim races:</strong> claim is a compare-and-set (<code>UPDATE … SET claimed_by=$m WHERE id=$i AND claimed_by IS NULL</code>); if zero rows changed, exit 1 and report the current claimer.</li>
+  <li><strong>Packing templates are static data in code</strong> (a <code>TEMPLATES</code> map in <code>checklists.ts</code>: beach/hill/city × ~12 sensible items each; every template includes the shared first-aid kit as a <em>gear</em> item, not packing). Seeding twice adds nothing (dedupe by exact label). Plan-derived extras ("snorkel gear because Tuesday's item is snorkeling") are the <em>agent's</em> judgment via <code>packing add</code> — never inferred by the script.</li>
+  <li><strong>Readiness seed</strong> creates from <code>trip.start_date</code> (exit 1 if unset), all <code>per_member=0</code> unless noted:
+    <table>
+      <tr><th>Offset</th><th>Label</th><th>per_member</th></tr>
+      <tr><td>T-7</td><td>Book airport transfers / cabs</td><td>0</td></tr>
+      <tr><td>T-3</td><td>Confirm ID documents valid &amp; packed</td><td>1</td></tr>
+      <tr><td>T-2</td><td>Share meds / allergy notes if any</td><td>1</td></tr>
+      <tr><td>T-1</td><td>Online check-in</td><td>1</td></tr>
+      <tr><td>T-1</td><td>Download offline maps for destination(s)</td><td>0</td></tr>
+    </table>
+  Re-seed after a start-date change: <code>readiness seed</code> updates due_dates of its own seeded items (match by label) instead of duplicating.</li>
+  <li><code>readiness due --at</code>: items with <code>due_date ≤ at</code> and not done; for <code>per_member=1</code> items, list which active on-trip participants (participation status not 'out' for <code>start_trip</code>) haven't confirmed.</li>
+</ul>
+
+<h3>1.3 Heartbeat sections</h3>
+<ul>
+  <li><code>planning</code> edition (only when stage is <code>plan_ready</code> or within 7 days of <code>start_date</code>): <code>readinessDue</code> = output of the due query; <code>gearUnclaimed</code> = unclaimed gear items when within 3 days of start.</li>
+</ul>
+
+<h3>1.4 Instruction edits</h3>
+<p><code>trip-core/SKILL.md</code>, new section "Packing, gear &amp; readiness" (place after Assets): the command block above plus: <em>"When the plan locks (<code>plan_ready</code>), offer once to seed packing (pick the template from the trip's destinations), seed readiness, and start the shared-gear board. Claiming is first-come: relay claim conflicts as-is. When the heartbeat lists readiness gaps, @mention only the members who haven't confirmed, once, politely."</em> Add one line to <code>instructions.md</code>: <em>"Packing/gear/readiness state lives in trip.db via <code>$TC gear|packing|readiness …</code> — never track it in prose."</em></p>
+
+<h3>1.5 Tests — new file <code>trip-core/test/checklists.test.ts</code></h3>
+<ol>
+  <li>Gear: add → claim → second claim by another member exits 1 naming claimer; unclaim by non-claimer exits 1, <code>--force</code> works; board orders unclaimed first.</li>
+  <li>Packing: seed beach twice → no duplicates; per-member item confirm tracked per member.</li>
+  <li>Readiness: seed with start 2026-08-14 → due_dates 08-07/08-11/08-12/08-13/08-13; <code>due --at 2026-08-12</code> returns exactly the T-7/T-3/T-2 items; per-member gaps exclude an 'out' participant and a confirmed member; re-seed after date change updates dues without duplicating.</li>
+  <li>Heartbeat: within-3-days trip with unclaimed gear → <code>gearUnclaimed</code> present and wakes; 10 days out → absent.</li>
+  <li>All mutations journaled with actor.</li>
+</ol>
+
+<h2 id="s2">§2 Stay cards, safety cards, day-of concierge <span class="tag">trip-planning + trip-core</span></h2>
+<p><strong>Why:</strong> "what's the wifi", "what's the address for the driver", "where's the nearest pharmacy", "which terminal am I" are the highest-frequency on-trip questions, all answerable from state captured once.</p>
+
+<h3>2.1 Schema (add to <code>migratePlanning</code>)</h3>
+<pre><code>CREATE TABLE IF NOT EXISTS place_info (
+  place_id INTEGER NOT NULL REFERENCES places(id),
+  key TEXT NOT NULL,             -- free-form; conventional keys below
+  value TEXT NOT NULL,
+  source_url TEXT,
+  updated_by INTEGER REFERENCES members(id),
+  updated_at TEXT NOT NULL,
+  PRIMARY KEY (place_id, key)
+);</code></pre>
+<p>Conventional keys (document in SKILL.md, not enforced): stays → <code>wifi</code>, <code>door_code</code>, <code>host_phone</code>, <code>checkout_time</code>, <code>house_rules</code>, <code>address_local</code> (address in local script for taxi drivers). Destinations → <code>emergency</code>, <code>hospital</code>, <code>pharmacy</code>, <code>police</code>, <code>embassy</code>.</p>
+
+<h3>2.2 CLI (extend <code>places.ts</code> + dispatcher)</h3>
+<pre><code>$TP info set --place &lt;id&gt; --key wifi --value "GoaVilla / sunset2026" [--source-url …] --by &lt;id&gt;
+$TP info unset --place &lt;id&gt; --key wifi --by &lt;id&gt;
+$TP stay card [--stay &lt;id&gt;]        # default: the committed stay covering date(now)
+$TP safety card [--destination &lt;id&gt;]  # default: committed destination for date(now)</code></pre>
+<ul>
+  <li><code>stay card</code> renders one text block: stay place name, address + <code>address_local</code>, <code>map_url</code>, check-in/out dates, <code>checkout_time</code>, then every info key/value, then <strong>a "missing" line listing conventional keys not yet set</strong> (that gap list is what prompts the agent to collect them at check-in).</li>
+  <li><code>safety card</code>: destination place + its info rows in the emergency/hospital/pharmacy/police/embassy order, same missing-gaps line. Upsert semantics on <code>info set</code> (REPLACE into the PK), journaled.</li>
+  <li>"Committed stay covering date(now)": <code>check_in ≤ date &lt; check_out</code>, status committed; none → exit 1 "no committed stay covers &lt;date&gt; — pass --stay".</li>
+</ul>
+
+<h3>2.3 Day-of concierge (trip-core, because it joins roster + legs + stays)</h3>
+<pre><code>$TC dayof [--member &lt;id&gt;] [--date &lt;YYYY-MM-DD&gt;]   # default: all members, today</code></pre>
+<p>Per member with a committed leg on that date: one block — name, each leg (<code>mode carrier depart→arrive, ref</code>, booking_url), then the night's stay place + address + <code>host_phone</code>. Members with no legs that day are omitted; if nobody has legs and no stay changes, print "no travel today". Read-only, no journal.</p>
+
+<h3>2.4 Heartbeat + instructions</h3>
+<ul>
+  <li>Morning edition: when any committed leg departs today, add section <code>dayof</code> = the concierge data (reuse the module).</li>
+  <li><code>trip-planning/SKILL.md</code> new section "On-trip cards": commands + <em>"At each check-in, collect wifi/door/host/checkout once via <code>info set</code> and confirm what you stored; answer 'wifi?/address?/rules?' with <code>stay card</code>, and 'pharmacy/hospital/emergency' with <code>safety card</code>. Fill safety keys at planning time from verified sources (store the URL in --source-url). Never answer these from chat memory."</em></li>
+</ul>
+
+<h3>2.5 Tests — new file <code>trip-planning/test/cards.test.ts</code> (+ dayof cases in <code>trip-core/test/cli.test.ts</code>)</h3>
+<ol>
+  <li><code>info set</code> upserts (set twice → one row, latest value) and journals; unset removes.</li>
+  <li><code>stay card</code> auto-picks the stay covering the injected date; boundary: on check_out date it does NOT match (lexicographic <code>&lt;</code>); missing-keys line lists exactly the unset conventional keys; no covering stay → exit 1.</li>
+  <li><code>safety card</code> ordering + gaps.</li>
+  <li><code>dayof</code>: member with 2 legs today renders both in depart order + stay block; member without legs omitted; no-travel day → the quiet message.</li>
+</ol>
+
+<h2 id="s3">§3 Roll-call <span class="tag">trip-core</span></h2>
+<p><strong>Why:</strong> "is everyone at the gate?" — message-driven presence, no location tracking (deliberately: privacy + battery + it fits the everything-is-a-message architecture).</p>
+<h3>3.1 Schema + CLI</h3>
+<pre><code>CREATE TABLE IF NOT EXISTS rollcalls (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  label TEXT NOT NULL,
+  opened_by INTEGER REFERENCES members(id),
+  opened_at TEXT NOT NULL,
+  closed_at TEXT
+);
+CREATE TABLE IF NOT EXISTS rollcall_checkins (
+  rollcall_id INTEGER NOT NULL REFERENCES rollcalls(id),
+  member_id INTEGER NOT NULL REFERENCES members(id),
+  at TEXT NOT NULL,
+  note TEXT,
+  PRIMARY KEY (rollcall_id, member_id)
+);</code></pre>
+<pre><code>$TC rollcall open --label "Airport T2" --by &lt;id&gt;    # exit 1 if one is already open
+$TC rollcall in --member &lt;id&gt; [--note "at security"]  # against the open rollcall
+$TC rollcall status                                  # in ✅ / missing ⬜ vs on-trip roster
+$TC rollcall close --by &lt;id&gt;</code></pre>
+<ul>
+  <li>Expected set = active members whose <code>on_trip</code> participation isn't 'out'. Duplicate check-in updates the note/time, doesn't error. Only one open roll-call at a time (simplicity; enforced). All open/close journaled.</li>
+  <li>Instructions (<code>trip-core/SKILL.md</code>, one paragraph under a new "Roll-call" heading): <em>"'Everyone here?' / 'roll call at the cab' → open one, mark people in as they say so ('here', '2 min away' → in with note), answer status from the script. Sender ≠ target still applies ('Maya's with me' marks Maya). Close it when complete and say so."</em></li>
+</ul>
+<h3>3.2 Tests — extend <code>trip-core/test/cli.test.ts</code> or new <code>rollcall.test.ts</code></h3>
+<ol>
+  <li>Open→in→status shows correct missing set (excludes 'out' participant); double open exits 1; duplicate in updates note; close then in → exit 1; full check-in → status reports complete.</li>
+</ol>
+
+<h2 id="s4">§4 Trip diary &amp; photo indexing <span class="tag">trip-core</span></h2>
+<p><strong>Why:</strong> memories are the artifact people keep, and capture must be zero-effort. Two pieces: a one-line-per-evening diary, and day/place tags on the existing asset index so photos land somewhere findable.</p>
+<h3>4.1 Schema + CLI</h3>
+<pre><code>CREATE TABLE IF NOT EXISTS diary_entries (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  date TEXT NOT NULL,
+  member_id INTEGER REFERENCES members(id),   -- NULL = group entry
+  entry TEXT NOT NULL,
+  created_at TEXT NOT NULL
+);
+-- assets: day/place tagging
+ensureColumn(db, 'assets', 'day_date', 'day_date TEXT');
+ensureColumn(db, 'assets', 'place_id', 'place_id INTEGER');</code></pre>
+<pre><code>$TC diary add --date 2026-08-15 --entry "Sunset cruise — dolphins!" [--member &lt;id&gt;] --by &lt;id&gt;
+$TC diary show [--date …]            # all entries, grouped by date
+$TC asset index … [--day 2026-08-15] [--place &lt;placeId&gt;]   # extend existing command
+$TC asset list [--day …] [--place …]                        # extend existing filters</code></pre>
+<p>Multiple entries per member per date allowed (they're moments, not slots). Journaled as <code>diary.add</code>.</p>
+<h3>4.2 Heartbeat + instructions</h3>
+<ul>
+  <li>Evening edition: section <code>diaryPrompt</code> = <code>{hasEntryToday: boolean}</code> — lets the agent end the digest with one light question ("highlight of today?") only when nobody has answered yet. Never nag twice.</li>
+  <li><code>trip-core/SKILL.md</code>, extend the Assets section: <em>"On-trip, when a photo lands with an @mention, index it with <code>--day</code> (message date) and <code>--place</code> when known from today's plan. When someone answers the evening highlight question — or says anything diary-shaped ('best part of today was…') — save it with <code>diary add</code> and confirm in a word, not a ceremony."</em></li>
+</ul>
+<h3>4.3 Tests — new file <code>trip-core/test/diary.test.ts</code></h3>
+<ol>
+  <li>Add/show grouped by date; member vs group entries; asset day/place filters; heartbeat <code>diaryPrompt.hasEntryToday</code> flips after an entry; ensureColumn idempotency on a legacy assets table.</li>
+</ol>
+
+<h2 id="s5">§5 The recap document <span class="tag">trip-docs</span></h2>
+<p><strong>Why:</strong> the payoff artifact — the scrapbook the group forwards for years — and by trip end every input already sits in trip.db. This is a new composed doc type alongside <code>master</code>.</p>
+<h3>5.1 Scope + CLI</h3>
+<pre><code>$TD new goa-recap --title "Goa 2026 — The Recap" --type recap
+$TD compose goa-recap --db trip.db     # regenerates generated regions, preserves prose blocks
+$TD bump / show / render               # unchanged machinery</code></pre>
+<p><code>--type recap</code> scaffolds the same versioned shell as master (version markers, revision history, references, print CSS) with these <strong>generated regions</strong> (hash-guarded exactly like master's — reuse the existing generated-region mechanism in <code>compose.ts</code>; do not fork it) and prose blocks <code>blocks/&lt;slug&gt;/{intro,highlights,outtakes}.html</code>:</p>
+<table>
+<tr><th>Region</th><th>Source</th></tr>
+<tr><td>Route strip</td><td>Reuse the existing schematic SVG generator (committed destinations, nights, hop modes).</td></tr>
+<tr><td>Trip stats</td><td>Deterministic: nights away, destinations count, committed items done, Σ committed <code>travel_minutes</code> ("~X h on the move"), photos indexed, diary entries. Money: per-currency active-expense totals + top 3 expenses (via finance modules) — <strong>totals only, never balances/debts</strong> (a recap is not a bill).</td></tr>
+<tr><td>Day-by-day</td><td>Per committed day: theme + committed items (titles only) + that date's diary entries + up to 6 photo assets for the date as <code>&lt;img&gt;</code> with <strong>relative paths</strong> (assets live under <code>/workspace/agent/assets/…</code>, the doc lives in <code>/workspace/agent/</code> — relative paths keep the PDF render working).</td></tr>
+<tr><td>Superlatives</td><td>Closed decisions whose question starts with <code>[superlative]</code> — question (prefix stripped) + outcome. The agent runs the end-of-trip awards as normal trip-core polls titled that way (instructions below); zero closed superlatives → region renders a friendly placeholder.</td></tr>
+</table>
+<h3>5.2 Instruction edits</h3>
+<p><code>trip-docs/SKILL.md</code>, new short section "The recap": <em>"When the trip completes (stage <code>trip_complete</code>/<code>post_trip</code>), offer once to build the recap: run 2–3 fun superlative polls first (<code>decision open --question "[superlative] Trip MVP?" --mode poll …</code>), then <code>new --type recap</code>, write the intro/highlights prose from the diary, <code>compose</code>, <code>render</code>, send the PDF. It's a keepsake: warm tone, no balances, no logistics."</em> Add the recap row to the what-goes-where table.</p>
+<h3>5.3 Tests — extend <code>trip-docs/test/compose.test.ts</code> (follow existing seeding pattern)</h3>
+<ol>
+  <li>Scaffold: <code>new --type recap</code> creates shell v1 + the three prose block stubs.</li>
+  <li>Compose from a seeded trip.db (2 destinations, 3 days, diary entries, day-tagged photo assets, 1 closed <code>[superlative]</code> poll, expenses incl. voided): stats numbers exact (voided excluded); day cards contain diary text + ≤6 imgs with relative src; superlative rendered with prefix stripped; no balance/debt strings anywhere in output.</li>
+  <li>Prose blocks survive recompose; hand-edit inside a generated region → compose refuses (same behavior as master); empty trip.db → compose succeeds with placeholders, exit 0.</li>
+  <li><code>bump</code>/<code>show</code> behave identically to master docs (one canonical file).</li>
+</ol>
+
+<h2 id="s6">§6 Settlement drive <span class="tag">trip-finance + heartbeat</span></h2>
+<p><strong>Why:</strong> the lifecycle already models <code>post_trip</code>; the heartbeat's settlement edition (Improvement Pack §2) already reports balances every 3 days. This section adds the two small pieces that make it a <em>drive</em>: reminder state (so nudges escalate honestly and stop) and the archive handshake.</p>
+<h3>6.1 Schema + CLI</h3>
+<pre><code>CREATE TABLE IF NOT EXISTS settlement_nudges (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  at TEXT NOT NULL,
+  edges_json TEXT NOT NULL      -- the outstanding edges at nudge time
+);</code></pre>
+<pre><code>$TF nudge record [--at &lt;ISO&gt;]   # heartbeat/agent records that a reminder went out
+$TF nudge status                # count, last nudge time, whether edges changed since</code></pre>
+<ul>
+  <li>Heartbeat settlement edition gains fields: <code>nudgeCount</code>, <code>lastNudgeAt</code>, <code>edgesChangedSinceLastNudge</code> (compare current edges to the last recorded <code>edges_json</code>, order-normalized). Wake rule tightens: outstanding balances wake only if <code>edgesChangedSinceLastNudge</code> or ≥3 days since <code>lastNudgeAt</code> (never spam a static debt daily).</li>
+  <li>Instructions (<code>trip-finance/SKILL.md</code>, "Settling the trip" section): <em>"In post-trip, when the heartbeat wakes you with balances: send the settle plan with <code>--links</code>, then <code>$TF nudge record</code>. Escalate tone gently with nudgeCount (1: friendly plan · 2: direct @mentions of who owes · 3+: suggest the group settle it face-to-face and offer to stop reminding). When <code>allSettled</code>, celebrate briefly and propose <code>stage confirm --to archived</code> to the owner."</em></li>
+</ul>
+<h3>6.2 Tests — new file <code>trip-finance/test/nudge.test.ts</code></h3>
+<ol>
+  <li>Record/status roundtrip; <code>edgesChangedSinceLastNudge</code> false for identical edges (regardless of edge order), true after a new settlement partially clears one edge.</li>
+  <li>Heartbeat: fresh debt → wake; nudge recorded, same edges, +1 day → no wake; +3 days → wake; edges changed next day → wake; all settled → final wake with <code>allSettled</code>.</li>
+</ol>
+
+<h2 id="s7">§7 Preference distillation at trip close <span class="tag">trip-memory — instructions only</span></h2>
+<p><strong>Why:</strong> the person-level export/import (Improvement Pack §8) is the plumbing; this is the moment that fills it. No new code — one instruction flow, plus a single heartbeat flag.</p>
+<ul>
+  <li>Heartbeat settlement edition: add <code>distillPending: true</code> until a memory tagged <code>distilled</code> exists for the trip (query the memory store; if the memory DB is absent, omit the flag — never error).</li>
+  <li><code>trip-memory/SKILL.md</code>, new section "After the trip": <em>"Once home, run one distillation pass with the owner: propose 3–5 candidate durable preferences you observed but never saved ('early starts were misery for half the group', 'the standout day was the unplanned one') — each as a normal <code>remember</code> the owner then approves/forgets, plus one memory tagged <code>distilled</code> marking the pass done. Then offer the export for returning travellers' next trip."</em></li>
+  <li>Tests (extend <code>trip-memory/test/cli.test.ts</code>): a memory tagged <code>distilled</code> flips the heartbeat flag off (test via the heartbeat producer directly with a seeded memory.db path); absent memory.db → flag omitted, no crash.</li>
+</ul>
+
+<h2 id="s8">§8 Delivery checklist (in order)</h2>
+<ol>
+  <li>Verify Improvement Pack §1 + §2 exist (run <code>bun test container/skills/trip-companion-skills/trip-core</code> and check <code>heartbeat.test.ts</code> passes). If absent, implement them first from that spec.</li>
+  <li>§1 checklists engine (biggest surface — schema, module, dispatcher, heartbeat producers, tests).</li>
+  <li>§2 cards + concierge. §3 roll-call. §4 diary + asset tags.</li>
+  <li>§5 recap doc type (touch <code>compose.ts</code> carefully — reuse, don't fork, the generated-region hashing).</li>
+  <li>§6 settlement drive. §7 distillation flag + instructions.</li>
+  <li>SKILL.md frontmatter <em>description</em> updates (trigger phrases): trip-core += "packing list / who's bringing / roll call / diary / highlight of the day"; trip-planning += "wifi / house rules / nearest pharmacy / stay card"; trip-docs += "recap / scrapbook"; trip-finance += "chase settlements". Keep each description under the existing length discipline — extend the trigger clause, don't rewrite.</li>
+  <li>Run all six suites (§0) and the pre-existing tests untouched. Do NOT commit — leave the working tree for review.</li>
+</ol>
+
+<div class="callout"><strong>Explicit non-goals</strong> (decided; do not add): live GPS/location tracking · payment execution (links only, never move money) · flight-status API polling · any host-side (<code>src/</code>) change · converting currencies without a user-given rate · auto-sending documents (trip-docs send rules stay authoritative).</div>
+
+<h2 id="implementation">§9 Implementation record (2026-07-10)</h2>
+<p>This pack is implemented in the Trip Companion skill suite. The implementation keeps the specified boundary: all changes are inside <code>container/skills/trip-companion-skills/</code>; no host-side code, dependencies, currency conversion, payment execution, or location tracking was added.</p>
+<ul>
+  <li><strong>Core lifecycle state:</strong> additive core migrations now provide checklist, confirmation, roll-call, diary, and asset day/place metadata. <code>ensureColumn</code> is the shared idempotent additive-column helper.</li>
+  <li><strong>Checklists:</strong> <code>checklists.ts</code> implements static beach/hill/city templates, idempotent seeding, readiness due dates derived from <code>trip.start_date</code>, participant gaps, and compare-and-set shared-gear claims. Every mutation writes the journal.</li>
+  <li><strong>Cards and travel day:</strong> planning’s <code>place_info</code> table and cards cover stay facts and safety facts; core’s <code>dayof</code> joins committed legs and the nightly stay.</li>
+  <li><strong>On-trip capture:</strong> roll-call is message-based only; diary entries and indexed photos are queryable by date and place.</li>
+  <li><strong>Heartbeat:</strong> <code>heartbeat.ts</code> supplies deterministic JSON for planning, morning, evening, and settlement editions, including readiness, gear, concierge, diary, nudge, and optional memory-distillation sections. It has the extension-producer registration point required by this pack.</li>
+  <li><strong>Recap:</strong> <code>--type recap</code> creates a versioned shell with hash-guarded generated regions and authored <code>intro</code>, <code>highlights</code>, and <code>outtakes</code> blocks. Compose draws its route, stats, committed-day diary/photo cards, and <code>[superlative]</code> results from <code>trip.db</code>, deliberately excluding balances/debts.</li>
+  <li><strong>Settlement and memory closure:</strong> normalized transfer edges are persisted with each nudge so static debt is not re-notified daily; an optional existing <code>memory.db</code> is inspected for the <code>distilled</code> tag without creating or failing on a missing memory database.</li>
+</ul>
+<p>Focused regression coverage was added for checklist idempotency/claims/readiness gaps, roll-call and diary/photo filtering, stay/safety cards, settlement-edge change detection, and recap composition. The complete six-suite acceptance gate passed after the change.</p>
+
+<h2 id="user-guide">§10 User guide examples</h2>
+<p>The assistant-facing skills now contain these command flows too. These examples show what a new Trip Companion user can ask for and the corresponding deterministic state action.</p>
+
+<h3>Before the trip: packing, gear, and readiness</h3>
+<pre><code>User: "We are going to Goa — make a packing list."
+Assistant: choose the relevant template and seed it once.
+$TC packing seed --template beach --by 1
+
+User: "Add snorkel gear for everybody."
+$TC packing add --label "Snorkel gear" --per-member --by 1
+
+User: "I will bring the Bluetooth speaker."
+$TC gear claim 7 --member 2
+
+User: "What are we still late on?"
+$TC readiness due
+
+User: "My online check-in is done."
+$TC readiness confirm 12 --member 2</code></pre>
+<p>Gear claims are intentionally first-come. If somebody already claimed an item, the assistant reports the stored claimant rather than guessing or overwriting it.</p>
+
+<h3>At the stay: one reliable answer for recurring questions</h3>
+<pre><code>User: "The villa Wi-Fi is GoaVilla / sunset2026; checkout is 11."
+$TP info set --place 5 --key wifi --value "GoaVilla / sunset2026" --by 1
+$TP info set --place 5 --key checkout_time --value "11:00" --by 1
+
+User: "What is the Wi-Fi and taxi address?"
+$TP stay card
+
+User: "Where is the nearest pharmacy?"
+$TP safety card</code></pre>
+<p>At check-in, the card calls out missing conventional values (door code, host phone, local taxi address, and so on) so facts are captured once, verified, and then read back from state.</p>
+
+<h3>Travel day and meeting up</h3>
+<pre><code>User: "Give us the travel-day brief for tomorrow."
+$TC dayof --date 2026-08-15
+
+User: "Open a roll call for Airport T2."
+$TC rollcall open --label "Airport T2" --by 1
+
+User: "Maya and I are through security."
+$TC rollcall in --member 3 --note "through security with Alice" --by 1
+
+User: "Who are we waiting for?"
+$TC rollcall status
+
+User: "Everyone is here."
+$TC rollcall close --by 1</code></pre>
+<p>Roll-call tracks voluntary message check-ins only; it never uses GPS or background location.</p>
+
+<h3>During the trip: preserve the little moments</h3>
+<pre><code>User: "Best part today was the dolphin sunset cruise."
+$TC diary add --date 2026-08-15 --entry "Dolphin sunset cruise" --member 2 --by 2
+
+User sends a photo at Chapora Fort.
+$TC asset index --kind photo --label "Chapora Fort sunset" \
+  --path assets/photos/chapora-sunset.jpg --day 2026-08-15 --place 9 --by 2
+
+User: "Show our August 15 memories."
+$TC diary show --date 2026-08-15
+$TC asset list --day 2026-08-15</code></pre>
+
+<h3>After the trip: settle gracefully and close the loop</h3>
+<pre><code>User: "Who still needs to settle?"
+$TF settle
+$TF nudge status
+
+Assistant sends the agreed reminder, then records it:
+$TF nudge record
+
+User: "What did we learn for our next trip?"
+$TM remember --trip goa-2026 --title "Relaxed mornings" \
+  --content "Avoid early starts for this group" --category preference \
+  --tags distilled --importance 4 --by "Trip owner"</code></pre>
+<p>The nudge state prevents daily repetition when nothing has changed. The <code>distilled</code> tag marks that the owner-led preference pass is complete.</p>
+
+<h3>Create and share the recap</h3>
+<pre><code>User: "Make a scrapbook of the Goa trip."
+
+# Optional fun awards first
+$TC decision open --question "[superlative] Trip MVP?" \
+  --mode poll --options "Maya|The sunset cruise|Chapora Fort" --by 1
+
+# Create the one canonical keepsake and its authored prose stubs
+$TD new goa-recap --title "Goa 2026 — The Recap" --type recap
+
+# Write warm prose in blocks/goa-recap/intro.html, highlights.html, outtakes.html,
+# then regenerate state-derived regions and produce the shareable artifact.
+$TD compose goa-recap --db /workspace/agent/trip.db
+$TD render goa-recap</code></pre>
+<p>The recap is a warm artifact: it includes route, day cards, diary moments, photos, trip totals, and awards. It never includes balances, debts, or a payment demand.</p>
+
+<p class="meta">End of pack 2 — implemented and verified.</p>
+
+</body>
+</html>

@@ -1,0 +1,12 @@
+---
+name: learning-visuals
+description: Render a deterministic accessible course visual for a routing-scoped student when a graph, process, comparison, or worked-example diagram materially improves the explanation.
+---
+
+Resolve student context and read its audience profile. Search `instruction search --concept <canonical-id> --tags '["diagram"]' --json` before creating a new visual. Reuse an approved resource when it fits the current concept, provenance, and age range. Use `visual render` after retrieving grounded course material when its deterministic graph, process, comparison, or worked-example form is sufficient. Supply provenance identifiers. Return the visual with its text alternative; never use a visual as learning-state authority.
+
+Whenever a simple concept, multi-step process, sequence, data relationship, comparison, or small concept map would materially improve comprehension, use the globally mounted skill named `diagram-design`. Follow its type selection, layout, connector, accessibility, and validation rules. Calibrate every label and annotation to the configured ELI target, while preserving real subject vocabulary. Keep the tutor application's planning and evidence records as the source of pedagogical state and provenance.
+
+Save a generic diagram artifact inside the current student's tutor artifact directory, include a complete text alternative, and call `instruction propose` with its stable canonical concept ID, `diagram` kind, source provenance, and tags including `diagram`, the diagram type, grade, and ELI target. The proposal is student-private until a tutor explicitly approves it. Tutor-authored generic diagrams may be registered directly with `admin instruction-register`. Never promote student-specific answers, names, scores, misconceptions, or other personal data into the shared repository.
+
+After proposing or registering a material, use `instruction list --concept <canonical-id> --limit 200 --json` to inspect the concept-linked catalogue. Both student and tutor channels may call this command: students see approved source and generated materials, while tutors also see proposals waiting for review. The result includes a one-line explanation, format, provenance, tags, and `preview_path`; use that path with `send_file` when the material should be re-sent in the current channel for review. Tutor approval promotes the generated artifact bundle into the shared course resources directory.

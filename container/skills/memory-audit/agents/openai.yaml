@@ -1,0 +1,4 @@
+interface:
+  display_name: "Memory Audit"
+  short_description: "Evaluate NanoClaw memory health and recall quality."
+  default_prompt: "Audit this agent group's memory health and run the configured recall evaluation suite."

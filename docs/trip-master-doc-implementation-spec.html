@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Trip Master Document — Implementation Spec</title>
+  <style>
+    body{font:15px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;max-width:920px;margin:0 auto;padding:28px 18px 60px;color:#202938;background:#f7f8fb}
+    header,section{background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:20px;margin:14px 0}
+    h1{font-size:24px;margin:0 0 6px}h2{font-size:18px;margin:0 0 12px;color:#0f3a5f}h3{font-size:15px;margin:18px 0 8px;color:#1f5d8f}
+    code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;background:#eef2f7;border-radius:4px;padding:1px 5px}
+    pre{background:#111827;color:#e5e7eb;border-radius:8px;padding:12px 14px;overflow:auto;font-size:13px}
+    table{border-collapse:collapse;width:100%;font-size:14px;margin:10px 0}th,td{text-align:left;vertical-align:top;border-bottom:1px solid #edf0f4;padding:7px 8px}th{background:#f3f4f6}
+    .ok{color:#166534;font-weight:700}.warn{color:#92400e;font-weight:700}.rule{border-left:4px solid #2563eb;background:#eff6ff;padding:10px 12px;border-radius:6px}
+  </style>
+</head>
+<body>
+<header>
+  <h1>Trip Master Document — Implementation Spec</h1>
+  <p>Implemented 2026-07-08. Scope: deterministic trip master document generation, route/map support, deploy-only Netlify artifact workflow, skill instructions, and focused tests.</p>
+</header>
+
+<section>
+  <h2>Principles</h2>
+  <ul>
+    <li><strong>Document format and deployment are separate.</strong> <code>trip-docs</code> owns master/research/free document types, compose, bump, render, anchors, and prose blocks. <code>artifact-deploy</code> owns generic hosted deployment for any agent group.</li>
+    <li><strong>Scripts compute; the model judges.</strong> Route strips, tabs, anchors, ops summaries, password bundles, and deploy manifests are deterministic code paths with tests.</li>
+    <li><strong>No automatic Netlify deploys.</strong> To preserve free-tier usage, agents must not deploy unless the user explicitly asks. A successful deploy response goes back to the active chat surface, for Trip Companion this means WhatsApp, with the running URL and version.</li>
+  </ul>
+</section>
+
+<section>
+  <h2>Phase Coverage</h2>
+  <table>
+    <tr><th>Phase</th><th>Implemented</th><th>Primary files</th></tr>
+    <tr><td>P1 Master template + compose</td><td><span class="ok">Yes</span>: <code>new --type master</code>, generated regions, route strip, calendar ribbon, stays, days, budget, tabs, § chips, prose blocks, tamper refusal.</td><td><code>container/skills/trip-companion-skills/trip-docs/scripts/docs.ts</code><br><code>container/skills/trip-companion-skills/trip-docs/scripts/compose.ts</code><br><code>container/skills/trip-companion-skills/trip-docs/scripts/trip-docs.ts</code></td></tr>
+    <tr><td>P2 Ops tab + lifecycle</td><td><span class="ok">Yes</span>: decisions, open questions, booking placeholder, journal-backed changelog, stage badge, operations pulse.</td><td><code>compose.ts</code></td></tr>
+    <tr><td>P3 Geographic map</td><td><span class="ok">Yes</span>: <code>place</code> already had <code>lat/lng</code>; Google Maps URL parsing now fills coordinates when explicit values are not provided. Compose emits hosted map metadata and Google directions links while preserving print fallback.</td><td><code>container/skills/trip-companion-skills/trip-planning/scripts/places.ts</code><br><code>compose.ts</code></td></tr>
+    <tr><td>P4 Netlify deploy</td><td><span class="ok">Yes, generic</span>: implemented as <code>artifact-deploy</code>, not trip-specific. It creates deterministic Netlify bundles, password hashes, <code>deploy_state</code>, setup/deploy/status/history/rollback/teardown commands, and file-digest deploy API calls. Netlify token is expected through OneCLI or <code>NETLIFY_AUTH_TOKEN</code> for local operator tests.</td><td><code>container/skills/artifact-deploy/</code></td></tr>
+    <tr><td>P5 Instructions + eval</td><td><span class="ok">Yes</span>: trip-docs instructions now describe compose-to-bump-to-PDF/deploy flow and deploy guardrails. Focused deterministic tests cover compose, anchors, tamper refusal, coordinate parsing, and Netlify bundles.</td><td><code>trip-docs/SKILL.md</code><br><code>trip-docs/instructions.md</code><br><code>trip-docs/test/compose.test.ts</code><br><code>artifact-deploy/test/netlify.test.ts</code></td></tr>
+  </table>
+</section>
+
+<section>
+  <h2>Command Surface</h2>
+  <h3>Trip documents</h3>
+  <pre><code>TD="bun /app/skills/trip-docs/scripts/trip-docs.ts --dir /workspace/agent"
+$TD new scotland --title "Scotland 2026 — Master Document" --type master
+$TD compose scotland --db trip.db
+$TD bump scotland --summary "locked Skye route and added Portree stay"
+$TD render scotland</code></pre>
+  <h3>Generic deployment</h3>
+  <pre><code>AD="bun /app/skills/artifact-deploy/scripts/artifact-deploy.ts --dir /workspace/agent"
+$AD netlify setup --site &lt;site-name&gt; --state-db trip.db
+$AD netlify set-password --state-db trip.db
+$AD netlify bundle --input scotland.html --slug scotland --state-db trip.db
+$AD netlify deploy --input scotland.html --slug scotland --site-id &lt;site-id&gt; --state-db trip.db
+$AD netlify status --state-db trip.db</code></pre>
+  <p class="rule"><strong>Deployment rule:</strong> do not run <code>netlify deploy</code>, <code>set-password</code>, <code>rollback</code>, or <code>teardown</code> unless the user explicitly asks. After deploy, reply in WhatsApp with the running URL and document version.</p>
+</section>
+
+<section>
+  <h2>State and Files</h2>
+  <ul>
+    <li><code>blocks/&lt;slug&gt;/*.html</code> stores authored prose blocks. Compose preserves these blocks.</li>
+    <li>Generated HTML regions use <code>&lt;!-- gen:name sha256=... --&gt;</code> markers. If a generated region is hand-edited, compose refuses to overwrite it.</li>
+    <li><code>version.json</code> is written beside the document for hosted reload checks.</li>
+    <li><code>deploy_state</code> in an optional state DB stores Netlify site, password hash, last bundle, last deploy, and rollback metadata.</li>
+    <li><code>.deploy/&lt;slug&gt;/</code> is the deterministic Netlify bundle directory.</li>
+  </ul>
+</section>
+
+<section>
+  <h2>Verification</h2>
+  <table>
+    <tr><th>Check</th><th>Status</th></tr>
+    <tr><td><code>bun test container/skills/trip-companion-skills/trip-docs/test/docs.test.ts container/skills/trip-companion-skills/trip-docs/test/compose.test.ts</code></td><td><span class="ok">8 pass</span></td></tr>
+    <tr><td><code>bun test container/skills/trip-companion-skills/trip-planning/test/crud.test.ts</code></td><td><span class="ok">6 pass</span></td></tr>
+    <tr><td><code>bun test container/skills/artifact-deploy/test/netlify.test.ts</code></td><td><span class="ok">2 pass</span></td></tr>
+  </table>
+  <p class="warn">Live Netlify deployment was not run. This is intentional: the user explicitly asked not to spend free usage unless deploying on request.</p>
+</section>
+
+<section>
+  <h2>Operational Notes</h2>
+  <ul>
+    <li>The Netlify token is assumed to be installed in OneCLI for <code>api.netlify.com</code>. The deploy script omits an Authorization header when no local <code>NETLIFY_AUTH_TOKEN</code> is present so OneCLI can inject credentials.</li>
+    <li>The Edge Function source is included in every bundle. Static file deployment uses Netlify's file-digest API; if live edge-function upload semantics need additional Netlify-specific packaging, use the generated bundle as the stable source artifact and verify once with a user-approved deploy.</li>
+    <li>The original design's trip-specific deployment module has been generalized to <code>artifact-deploy</code> so any agent group can use the same Netlify workflow for any HTML artifact.</li>
+  </ul>
+</section>
+
+</body>
+</html>

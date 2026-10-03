@@ -1,0 +1,12 @@
+{
+  "id": "phonepe-22",
+  "kind": "upi",
+  "style": "phonepe",
+  "amount": "23556.27",
+  "currency": "INR",
+  "payer": "Tara Kapoor",
+  "payee_or_merchant": "Lakshmi Iyer",
+  "txn_id": "T20265806704263968",
+  "degradation": null,
+  "expected": "extract"
+}

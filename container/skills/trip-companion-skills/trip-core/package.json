@@ -1,0 +1,10 @@
+{
+  "name": "trip-core-skill",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Shared trip domain core (identity, roster, relationships, lifecycle, participation, decisions, scratchpad, assets, journal, recap) for the Trip Companion NanoClaw skills (runs under Bun in agent containers)",
+  "scripts": {
+    "test": "bun test"
+  }
+}

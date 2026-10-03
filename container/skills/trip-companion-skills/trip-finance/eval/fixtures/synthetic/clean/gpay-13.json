@@ -1,0 +1,12 @@
+{
+  "id": "gpay-13",
+  "kind": "upi",
+  "style": "gpay",
+  "amount": "1955.00",
+  "currency": "INR",
+  "payer": null,
+  "payee_or_merchant": "Dev Anand",
+  "txn_id": "T20265997196196487",
+  "degradation": null,
+  "expected": "extract"
+}

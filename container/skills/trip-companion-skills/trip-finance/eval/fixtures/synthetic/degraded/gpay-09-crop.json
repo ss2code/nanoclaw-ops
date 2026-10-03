@@ -1,0 +1,12 @@
+{
+  "id": "gpay-09-crop",
+  "kind": "upi",
+  "style": "gpay",
+  "amount": "17893.76",
+  "currency": "INR",
+  "payer": null,
+  "payee_or_merchant": "Lakshmi Iyer",
+  "txn_id": "T20267682896781486",
+  "degradation": "crop",
+  "expected": "extract-or-clarify"
+}

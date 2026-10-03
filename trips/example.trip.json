@@ -1,0 +1,13 @@
+{
+  "name": "Goa 2026",
+  "model": "sonnet",
+  "maxMessagesPerPrompt": 30,
+  "members": [
+    { "user": "telegram:5550001111", "displayName": "Alex" },
+    { "user": "cli:alex", "displayName": "Alex (CLI)" }
+  ],
+  "wires": [
+    { "channel": "cli", "platformId": "goa-2026-dev", "engageMode": "pattern", "engagePattern": "@trip" },
+    { "channel": "telegram", "platformId": "<telegram-group-chat-id>", "engageMode": "mention", "ignoredMessagePolicy": "accumulate" }
+  ]
+}

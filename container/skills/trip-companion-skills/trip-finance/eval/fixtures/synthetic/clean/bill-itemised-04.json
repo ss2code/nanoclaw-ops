@@ -1,0 +1,12 @@
+{
+  "id": "bill-itemised-04",
+  "kind": "bill",
+  "style": "bill-itemised",
+  "amount": "4863.60",
+  "currency": "INR",
+  "payer": null,
+  "payee_or_merchant": "Goa Fuel Station",
+  "txn_id": null,
+  "degradation": null,
+  "expected": "extract"
+}

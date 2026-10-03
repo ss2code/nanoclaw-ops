@@ -1,0 +1,12 @@
+{
+  "id": "paytm-04-crop",
+  "kind": "upi",
+  "style": "paytm",
+  "amount": "23343.00",
+  "currency": "INR",
+  "payer": "Lakshmi Iyer",
+  "payee_or_merchant": "Meera Mehta",
+  "txn_id": "T20269075797680056",
+  "degradation": "crop",
+  "expected": "extract-or-clarify"
+}

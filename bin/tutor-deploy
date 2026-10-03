@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+# Node-22-safe tutor template deployment helper.
+set -euo pipefail
+
+SCRIPT="${BASH_SOURCE[0]}"
+while [ -h "$SCRIPT" ]; do
+  DIR="$(cd -P "$(dirname "$SCRIPT")" && pwd)"
+  SCRIPT="$(readlink "$SCRIPT")"
+  [[ "$SCRIPT" != /* ]] && SCRIPT="$DIR/$SCRIPT"
+done
+SCRIPT_DIR="$(cd -P "$(dirname "$SCRIPT")" && pwd)"
+PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
+cd "$PROJECT_ROOT"
+
+NODE="$("$PROJECT_ROOT/scripts/resolve-node.sh")"
+TSX="$PROJECT_ROOT/node_modules/tsx/dist/cli.mjs"
+[ -f "$TSX" ] || { echo "error: tsx not found at $TSX — run pnpm install first" >&2; exit 1; }
+exec "$NODE" "$TSX" "$PROJECT_ROOT/templates/education/knowledge-graph-tutor/host/deploy.ts" "$@"

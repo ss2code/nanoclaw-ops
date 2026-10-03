@@ -1,0 +1,60 @@
+{
+  "source": {
+    "assistantName": "Jeeves",
+    "agentGroupId": "jeeves",
+    "providerName": "codex",
+    "configuredModel": "gpt-5.6-luna",
+    "effort": "xhigh",
+    "modelTiers": {
+      "high": "gpt-5.6-sol",
+      "medium": "gpt-5.6-terra",
+      "low": "gpt-5.6-luna",
+      "default": "low"
+    }
+  },
+  "destinations": [
+    {
+      "name": "atlas",
+      "displayName": "Atlas",
+      "type": "agent",
+      "agentGroupId": "atlas"
+    },
+    {
+      "name": "errand-runner",
+      "displayName": "Errand Runner",
+      "type": "agent",
+      "agentGroupId": "errand-runner"
+    }
+  ],
+  "identities": {
+    "atlas": {
+      "assistantName": "Atlas",
+      "agentGroupId": "atlas",
+      "providerName": "codex",
+      "configuredModel": "gpt-5.6-luna",
+      "effort": "xhigh",
+      "modelTiers": {
+        "high": "gpt-5.6-sol",
+        "medium": "gpt-5.6-terra",
+        "low": "gpt-5.6-luna",
+        "default": "low"
+      }
+    },
+    "errand-runner": {
+      "assistantName": "Errand Runner",
+      "agentGroupId": "errand-runner",
+      "providerName": "opencode",
+      "configuredModel": "deepseek/deepseek-v4-flash",
+      "effort": "max",
+      "modelTiers": {
+        "high": "openai/gpt-5.6-luna",
+        "medium": "deepseek/deepseek-v4-flash",
+        "low": "openai/gpt-oss-120b",
+        "default": "medium"
+      }
+    }
+  },
+  "answers": {
+    "errand-runner": "The safer migration is reversible: change Atlas first, verify one representative workload, and keep a rollback receipt."
+  }
+}

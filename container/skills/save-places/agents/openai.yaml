@@ -1,0 +1,4 @@
+interface:
+  display_name: "Save Places"
+  short_description: "Save and track places by region"
+  default_prompt: "Use $save-places to save this place and update its regional tracker."

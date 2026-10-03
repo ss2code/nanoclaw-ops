@@ -1,0 +1,12 @@
+{
+  "id": "bill-itemised-03",
+  "kind": "bill",
+  "style": "bill-itemised",
+  "amount": "6043.80",
+  "currency": "INR",
+  "payer": null,
+  "payee_or_merchant": "Baga Supermart",
+  "txn_id": null,
+  "degradation": null,
+  "expected": "extract"
+}

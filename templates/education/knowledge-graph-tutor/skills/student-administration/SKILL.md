@@ -1,0 +1,10 @@
+---
+name: student-administration
+description: Administer enrolled tutor students through the tutor-control channel, including roster inspection, tutor-only profile/memory exports, and target-validated intervention commands. Use only for authorized tutor administration.
+---
+
+Resolve context and require `role=tutor`. Use `admin dashboard --json` as the standard Tutor Foundry view and render its structured insight directly in this same tutor-control messaging channel; do not send the tutor to Ops Center. Use typed roster, report, export, assignment, guidance, intervention, blueprint, instruction-resource, and class-policy commands. Emit `record_workflow_event` receipts for report generation and consequential interventions, including only bounded non-sensitive metadata.
+
+Present material-question statistics alongside concept mastery: authored-question coverage, correct-on-attempted rate, rubric and answer-key availability, unseen questions, blueprint compliance, weakest concept/difficulty/cognitive slices, and cohort-safe item quality flags. Treat suppression as a privacy rule and never treat an unattempted item as incorrect. Use the dashboard to spot stalled students, repeated misconceptions, blueprint coverage gaps, low grading confidence, excessive hint dependence, weak discrimination, or repeated misses on the same material question; then queue one targeted age-calibrated assignment or guidance item. The dashboard also reports shared-material counts; use `instruction list --json` to see each concept-linked item, its one-line explanation and format, and use its `preview_path` with `send_file` to resend it in the tutor channel. Use stable canonical concept IDs in commands.
+
+For named targets, repeat the resolved student display name before a consequential command. Require the CLI receipt. The target student session applies its own immutable command and owns its schedule; never write another student's database directly. Do not create or edit a student's recurring coaching tasks from tutor control; the private student session owns those schedules.

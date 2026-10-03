@@ -1,0 +1,10 @@
+{
+  "name": "nano-pvt-hub-skill",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Shared document hub publisher for NanoClaw agent groups and the host",
+  "scripts": {
+    "test": "bun test"
+  }
+}

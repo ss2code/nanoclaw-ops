@@ -1,0 +1,48 @@
+{
+  "id": "sample-trip-direct-workers",
+  "version": 1,
+  "description": "Direct, bidirectional worker routes from Sample Trip to Scout and Atlas for bounded work.",
+  "mode": "direct",
+  "source": {
+    "app_handle": "sample-trip"
+  },
+  "targets": [
+    {
+      "app_handle": "errand-runner",
+      "source_local_name": "scout",
+      "target_local_name": "sample-trip"
+    },
+    {
+      "app_handle": "atlas",
+      "source_local_name": "atlas",
+      "target_local_name": "sample-trip"
+    }
+  ],
+  "policy": {
+    "allowed_work": [
+      "public_research",
+      "extraction_and_comparison",
+      "artifact_generation",
+      "independent_review",
+      "code_or_analysis_on_supplied_inputs"
+    ],
+    "credentials": "never_transfer",
+    "private_context": "send_only_minimum_sanitised_context",
+    "final_owner": "source_agent",
+    "verification": "source_agent_reviews_result_before_delivery",
+    "escalation": "owner_agent_for_private_authenticated_or_cross_trip_work"
+  },
+  "structure": {
+    "request": "The source sends a self-contained task with objective, inputs, constraints, expected output, and return target.",
+    "response": "The worker returns findings and files to the source agent; it does not address the human channel directly.",
+    "max_hops": 1,
+    "fan_out": "explicit_only"
+  },
+  "configuration": {
+    "bidirectional": true,
+    "allow_files": true,
+    "require_explicit_address": true,
+    "host_acl": "agent_destinations",
+    "revoke": "ncl delegation-policies revoke --id sample-trip-direct-workers"
+  }
+}

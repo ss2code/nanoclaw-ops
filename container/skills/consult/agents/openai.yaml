@@ -1,0 +1,6 @@
+interface:
+  display_name: "Consult"
+  short_description: "Compare answers across distinct container models"
+  default_prompt: "Use /consult ask QUESTION to get a second opinion, then /consult more QUESTION to follow up."
+policy:
+  allow_implicit_invocation: false

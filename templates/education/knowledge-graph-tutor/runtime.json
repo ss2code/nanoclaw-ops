@@ -1,0 +1,10 @@
+{
+  "schema": 1,
+  "mounts": [
+    {
+      "source": "app",
+      "target": "/workspace/agent/tutor-app/app",
+      "readonly": true
+    }
+  ]
+}

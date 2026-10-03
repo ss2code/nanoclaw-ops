@@ -1,0 +1,12 @@
+{
+  "name": "save-places-skill",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Chat-driven regional place tracker for NanoClaw agent groups",
+  "scripts": {
+    "place-board": "bun scripts/place-board.ts",
+    "test": "bun test",
+    "typecheck": "tsc -p tsconfig.json"
+  }
+}

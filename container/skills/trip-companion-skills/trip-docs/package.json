@@ -1,0 +1,10 @@
+{
+  "name": "trip-docs-skill",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Single-canonical-file versioning + gated delivery for the Trip Companion's shared HTML documents (runs under Bun in agent containers)",
+  "scripts": {
+    "test": "bun test"
+  }
+}

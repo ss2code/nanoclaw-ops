@@ -1,0 +1,12 @@
+{
+  "id": "paytm-08-rotate",
+  "kind": "upi",
+  "style": "paytm",
+  "amount": "6121.00",
+  "currency": "INR",
+  "payer": null,
+  "payee_or_merchant": "Anil Kumar",
+  "txn_id": "T20262094270592295",
+  "degradation": "rotate",
+  "expected": "extract-or-clarify"
+}

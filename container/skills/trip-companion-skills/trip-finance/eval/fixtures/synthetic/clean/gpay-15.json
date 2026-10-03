@@ -1,0 +1,12 @@
+{
+  "id": "gpay-15",
+  "kind": "upi",
+  "style": "gpay",
+  "amount": "2294.00",
+  "currency": "INR",
+  "payer": "Raj Mehta",
+  "payee_or_merchant": "Dev Anand",
+  "txn_id": "T20267732726915650",
+  "degradation": null,
+  "expected": "extract"
+}

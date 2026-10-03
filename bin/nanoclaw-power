@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+# NanoClaw runtime power control. Unlike the dashboard, this remains available
+# after hard-off so the operator always has a recovery path.
+set -euo pipefail
+
+SCRIPT="${BASH_SOURCE[0]}"
+while [ -h "$SCRIPT" ]; do
+  DIR="$(cd -P "$(dirname "$SCRIPT")" && pwd)"
+  SCRIPT="$(readlink "$SCRIPT")"
+  [[ "$SCRIPT" != /* ]] && SCRIPT="$DIR/$SCRIPT"
+done
+SCRIPT_DIR="$(cd -P "$(dirname "$SCRIPT")" && pwd)"
+PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
+NODE="$("$PROJECT_ROOT/scripts/resolve-node.sh")"
+TSX="$PROJECT_ROOT/node_modules/tsx/dist/cli.mjs"
+
+[ -f "$TSX" ] || {
+  echo "error: tsx not found at $TSX — run pnpm install first" >&2
+  exit 1
+}
+
+cd "$PROJECT_ROOT"
+exec "$NODE" "$TSX" ops-center/power-cli.ts "$@"

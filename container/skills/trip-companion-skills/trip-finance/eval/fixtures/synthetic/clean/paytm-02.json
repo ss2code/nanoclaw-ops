@@ -1,0 +1,12 @@
+{
+  "id": "paytm-02",
+  "kind": "upi",
+  "style": "paytm",
+  "amount": "8638.76",
+  "currency": "INR",
+  "payer": "Arjun Kapoor",
+  "payee_or_merchant": "Anil Kumar",
+  "txn_id": "T20260329896144779",
+  "degradation": null,
+  "expected": "extract"
+}

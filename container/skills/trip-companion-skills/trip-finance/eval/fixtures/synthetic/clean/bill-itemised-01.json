@@ -1,0 +1,12 @@
+{
+  "id": "bill-itemised-01",
+  "kind": "bill",
+  "style": "bill-itemised",
+  "amount": "6717.90",
+  "currency": "INR",
+  "payer": null,
+  "payee_or_merchant": "Souza Lobo Beach Shack",
+  "txn_id": null,
+  "degradation": null,
+  "expected": "extract"
+}

@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+# Restart this checkout's Ops Center service using its install-specific label.
+set -euo pipefail
+
+SCRIPT="${BASH_SOURCE[0]}"
+while [ -h "$SCRIPT" ]; do
+  DIR="$(cd -P "$(dirname "$SCRIPT")" && pwd)"
+  SCRIPT="$(readlink "$SCRIPT")"
+  [[ "$SCRIPT" != /* ]] && SCRIPT="$DIR/$SCRIPT"
+done
+SCRIPT_DIR="$(cd -P "$(dirname "$SCRIPT")" && pwd)"
+PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
+
+# shellcheck source=../setup/lib/install-slug.sh
+source "$PROJECT_ROOT/setup/lib/install-slug.sh"
+
+case "$(uname -s)" in
+  Darwin)
+    LAUNCHCTL_BIN="${LAUNCHCTL_BIN:-launchctl}"
+    label="$(opscenter_launchd_label)"
+    target="gui/$(id -u)/$label"
+    "$LAUNCHCTL_BIN" kickstart -k "$target"
+    printf 'Restarted Ops Center: %s\n' "$target"
+    ;;
+  Linux)
+    SYSTEMCTL_BIN="${SYSTEMCTL_BIN:-systemctl}"
+    unit="$(opscenter_systemd_unit).service"
+    "$SYSTEMCTL_BIN" --user restart "$unit"
+    printf 'Restarted Ops Center: %s\n' "$unit"
+    ;;
+  *)
+    printf 'error: unsupported platform for Ops Center restart: %s\n' "$(uname -s)" >&2
+    exit 1
+    ;;
+esac

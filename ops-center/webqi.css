@@ -1,0 +1,254 @@
+.consult-layout {
+  display: grid;
+  grid-template-columns: 250px minmax(0, 1fr);
+  gap: 24px;
+  align-items: start;
+}
+.consult-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.consult-sidebar label,
+.consult-composer label {
+  display: block;
+  font: 500 13px var(--sans);
+  margin: 8px 0 6px;
+}
+.consult-sidebar select,
+.consult-composer select,
+.consult-composer input,
+.consult-composer textarea {
+  box-sizing: border-box;
+  width: 100%;
+  background: var(--bg);
+  color: var(--ink);
+  border: 1px solid var(--edge2);
+  border-radius: 8px;
+  padding: 10px;
+  font: 14px var(--sans);
+}
+.consult-main {
+  max-width: 900px;
+  min-width: 0;
+}
+.consult-topic-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.consult-topic-heading h2 {
+  font: 600 23px var(--sans);
+  letter-spacing: 0;
+  text-transform: none;
+  margin: 0;
+}
+.consult-main details {
+  margin: 14px 0;
+}
+.consult-main summary,
+.consult-sidebar summary {
+  cursor: pointer;
+  color: var(--act);
+  padding: 8px 0;
+}
+.consult-main .card {
+  padding: 18px;
+}
+.consult-composer textarea {
+  min-height: 94px;
+  font-size: 16px;
+  line-height: 1.5;
+  resize: vertical;
+}
+.consult-send-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+.consult-composer .primary {
+  background: var(--act);
+  color: var(--bg);
+}
+.consult-turn {
+  padding: 16px 0;
+  border-bottom: 1px solid var(--edge);
+}
+.consult-question {
+  background: var(--panel);
+  border-radius: 9px;
+  padding: 14px 16px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-size: 15px;
+  line-height: 1.6;
+}
+.consult-answer {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font: 15px/1.65 var(--sans);
+  margin: 14px 0;
+}
+.consult-turn .consult-source {
+  padding: 10px 14px;
+  background: var(--panel);
+  border-radius: 8px;
+  margin: 8px 0;
+}
+.consult-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.consult-topic {
+  display: block;
+  width: 100%;
+  text-align: left;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  color: var(--ink);
+  background: transparent;
+  padding: 11px;
+  font: 14px var(--sans);
+  cursor: pointer;
+  overflow-wrap: anywhere;
+}
+.consult-topic.selected {
+  background: var(--panel);
+  border-color: var(--act);
+}
+.consult-topic small {
+  display: block;
+  color: var(--sub);
+  margin-top: 4px;
+}
+.consult-model {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: space-between;
+  border-top: 1px solid var(--edge);
+  padding: 8px 0;
+}
+.consult-model label {
+  flex: 1;
+}
+.consult-model input {
+  width: auto;
+}
+.consult-model select {
+  width: 130px;
+}
+.consult-model small {
+  display: block;
+  color: var(--sub);
+  margin-left: 20px;
+}
+.consult-main button:focus-visible,
+.consult-sidebar button:focus-visible,
+.consult-main summary:focus-visible {
+  outline: 2px solid var(--act);
+  outline-offset: 3px;
+}
+#wi-live {
+  margin: 12px 0;
+  white-space: pre-wrap;
+}
+#wi-graph {
+  margin-top: 16px;
+}
+#wi-graph-file {
+  overflow-wrap: anywhere;
+}
+#wi-details .webqi-node {
+  cursor: default;
+}
+#wi-summary {
+  line-height: 1.6;
+}
+#wi-conversation:empty {
+  display: none;
+}
+[hidden] {
+  display: none !important;
+}
+@media (max-width: 820px) {
+  .consult-layout {
+    grid-template-columns: 1fr;
+  }
+  .consult-sidebar #wi-roots {
+    max-height: 180px;
+    overflow: auto;
+  }
+  .consult-main {
+    max-width: none;
+  }
+  .consult-model {
+    flex-wrap: wrap;
+  }
+  .consult-main button,
+  .consult-sidebar button,
+  .consult-main summary,
+  .consult-sidebar summary {
+    min-height: 44px;
+  }
+  .consult-sidebar select,
+  .consult-composer select,
+  .consult-composer input {
+    font-size: 16px;
+  }
+}
+/* Consult keeps operational telemetry in the System surface. */
+body:has(.consult-layout) .topbar .tvit {
+  display: none;
+}
+.webqi-intro h2 {
+  font: 600 22px var(--sans);
+  letter-spacing: 0;
+  text-transform: none;
+}
+.consult-topic-heading h2 {
+  border: 0;
+  padding: 0;
+}
+.consult-sidebar {
+  min-width: 0;
+}
+@media (max-width: 820px) {
+  html:has(.consult-layout) .shell {
+    display: block;
+  }
+  body:has(.consult-layout) .side {
+    position: static;
+    height: auto;
+    padding: 0;
+    max-width: 100%;
+  }
+  body:has(.consult-layout) .side .brand,
+  body:has(.consult-layout) .resizer {
+    display: none;
+  }
+  body:has(.consult-layout) .side nav {
+    flex-direction: row;
+    overflow-x: auto;
+    padding: 8px;
+    max-width: 100%;
+  }
+  body:has(.consult-layout) .side nav a {
+    flex: none;
+  }
+  body:has(.consult-layout) .content {
+    padding: 16px 12px 40px;
+  }
+  .consult-topic-heading {
+    flex-wrap: wrap;
+  }
+  .consult-send-row .btn {
+    max-width: 100%;
+    white-space: normal;
+  }
+}

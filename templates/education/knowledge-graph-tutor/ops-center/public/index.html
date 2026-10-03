@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="tutor-action-token" content="__ACTION_TOKEN__">
+  <meta name="tutor-api-base" content="/api" data-tutor-api-base>
+  <meta name="tutor-action-header" content="x-tutor-action-token" data-tutor-action-header>
+  <title>Tutor Foundry</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="shell">
+    <header class="topbar">
+      <a class="brand" href="#configuration" aria-label="Tutor Foundry home">
+        <span class="brand-mark"><span></span><span></span><span></span></span>
+        <span><strong>Tutor Foundry</strong><small>Knowledge-graph tutor</small></span>
+      </a>
+    </header>
+
+    <main>
+      <section class="app-header">
+        <div>
+          <p class="eyebrow">KNOWLEDGE-GRAPH TUTOR</p>
+          <h1>Tutor Foundry</h1>
+          <p class="hero-copy">Pair the rooms, create the class wiring, and let sessions start on demand.</p>
+        </div>
+      </section>
+
+      <nav class="tabs" aria-label="Tutor console sections">
+        <button class="tab active" data-tab="configuration"><span>01</span> Configuration</button>
+        <button class="tab" data-tab="status"><span>02</span> Status <b id="statusCount">0</b></button>
+        <button class="tab" data-tab="help"><span>03</span> Help</button>
+      </nav>
+
+      <section id="configuration" class="tab-panel active">
+        <div class="flow-banner">
+          <span class="flow-banner-mark">→</span>
+          <div><b>Pair rooms before launch</b><p>Pairing verifies the Telegram user and group for this class draft. It does not create or start a container. Launch creates the shared class wiring; the first room message starts its session container.</p></div>
+          <button class="button quiet" data-tab-link="help">How it works</button>
+        </div>
+        <div class="workspace">
+          <aside class="journey">
+            <p class="eyebrow">SETUP JOURNEY</p>
+            <button data-scroll="classStep" class="journey-step active"><b>1</b><span>Class identity<small>Save the class draft</small></span></button>
+            <button data-scroll="tutorStep" class="journey-step"><b>2</b><span>Tutor room<small>Verify private control</small></span></button>
+            <button data-scroll="studentsStep" class="journey-step"><b>3</b><span>Student rooms<small>One private session each</small></span></button>
+            <button data-scroll="launchStep" class="journey-step"><b>4</b><span>Create class wiring<small>Enable rooms, then wake on demand</small></span></button>
+            <div class="privacy-note"><span>◈</span><p><b>Private by design</b>Phone numbers stay in this local console. Paired Telegram IDs are used only for class routing.</p></div>
+          </aside>
+
+          <div class="form-flow">
+            <article class="step-card" id="classStep">
+              <div class="step-heading"><span>01</span><div><p>FOUNDATION</p><h2>Define the classroom</h2><small>Save the class identity first. No agent group or container is created yet.</small></div><i class="completion" id="classComplete">○</i></div>
+              <div class="field-grid three">
+                <label><span>Class number or label *</span><input id="classNumber" placeholder="e.g. Class 6" autocomplete="off"></label>
+                <label><span>Section</span><input id="section" placeholder="e.g. A" autocomplete="off"></label>
+                <label><span>Subject *</span><input id="subject" placeholder="e.g. Mathematics" autocomplete="off"></label>
+              </div>
+              <div class="divider"></div>
+              <div class="section-label"><span>TUTOR PROFILE</span><small>The person allowed to manage coursework and students</small></div>
+              <div class="field-grid two">
+                <label><span>Tutor name *</span><input id="tutorName" placeholder="Full name" autocomplete="name"></label>
+                <label><span>Tutor phone</span><input id="tutorPhone" placeholder="+91 …" autocomplete="tel"><small>Local reference only; never used for routing.</small></label>
+              </div>
+              <details class="advanced"><summary>Advanced application identity</summary><div class="field-grid three"><label><span>Application ID</span><input id="appId" placeholder="auto-generated"></label><label><span>Folder</span><input id="folder" placeholder="auto-generated"></label><label><span>Model override</span><input id="model" placeholder="Use group default"></label></div></details>
+            </article>
+
+            <article class="step-card" id="tutorStep">
+              <div class="step-heading"><span>02</span><div><p>CONTROL ROOM</p><h2>Pair the tutor group</h2><small>Verify the private Telegram group that will control this class. Pairing does not start a container.</small></div><i class="completion" id="tutorComplete">○</i></div>
+              <div class="pair-layout">
+                <div class="room-card tutor-room"><span class="room-icon">T</span><div><b id="tutorRoomLabel">Tutor control</b><small>Tutor account + bot</small></div><span class="room-state" id="tutorPairState">Not paired</span></div>
+                <div class="pair-actions"><p>Open the group, then start pairing. Send the exact four-digit code from the <strong>tutor’s Telegram account</strong>. The code is a one-time room proof, not a bot token.</p><button class="button dark" id="pairTutor">Generate pairing code</button><div class="pair-code" id="tutorPairCode" hidden><small>SEND THIS IN THE TUTOR GROUP</small><strong>••••</strong><span>Waiting for Telegram…</span></div></div>
+              </div>
+              <div class="callout flow-callout"><b>Safe to do now</b><span>This records the tutor identity and group route against the draft. The class agent group, app databases, and room wiring are created only when you launch.</span></div>
+              <details class="advanced"><summary>Advanced · paired Telegram identifiers</summary><div class="field-grid three"><label><span>Tutor Telegram user ID</span><input id="tutorTelegramUserId" placeholder="telegram:123…"></label><label><span>Tutor group ID</span><input id="tutorTelegramGroupId" placeholder="telegram:-100…"></label><label><span>Tutor group name</span><input id="tutorTelegramGroupName" placeholder="Filled by pairing"></label></div></details>
+            </article>
+
+            <article class="step-card" id="studentsStep">
+              <div class="step-heading"><span>03</span><div><p>LEARNING ROOMS</p><h2>Add student personas</h2><small>Pair one private Telegram group per student; each becomes its own shared session.</small></div><i class="completion" id="studentsComplete">○</i></div>
+              <div class="callout"><b>Group membership rule</b><span>Each group must contain the tutor, the bot, and exactly one student. Send that student’s pairing code from the student’s Telegram account. Different student slots can be paired at the same time.</span></div>
+              <div id="studentList" class="student-list"></div>
+              <button class="button add" id="addStudent"><span>＋</span> Add another student</button>
+            </article>
+
+            <article class="step-card launch-card" id="launchStep">
+              <div class="step-heading"><span>04</span><div><p>FINAL CHECK</p><h2>Create the class wiring</h2><small>This creates one shared subject agent, initializes the app, and connects the tutor and student rooms. Containers start on the first message.</small></div></div>
+              <div id="reviewSummary" class="review-summary"></div>
+              <div id="validationBox" class="validation-box neutral"><b>Complete the steps above</b><span>We’ll check every required field before anything is created.</span></div>
+              <div class="launch-actions"><button class="button quiet" id="saveDraft">Save draft</button><button class="button launch" id="instantiate">Create class &amp; enable rooms <span>→</span></button></div>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section id="status" class="tab-panel">
+        <div class="status-head"><div><p class="eyebrow">APPLICATION STATUS</p><h2>Class status</h2><p>Inspect roster, course progress, shared-material health, and tutor state.</p></div><button class="button quiet" id="refreshStatus">↻ Refresh status</button></div>
+        <div id="statusGrid" class="status-grid"><div class="empty-state"><span>◎</span><h3>No tutor instances yet</h3><p>Complete Configuration to create the first one.</p></div></div>
+      </section>
+
+      <section id="help" class="tab-panel">
+        <div class="help-page">
+          <div class="help-header"><p class="eyebrow">HOW TUTOR FOUNDRY WORKS</p><h2>Rooms first, containers on demand</h2><p>There is no permanent tutor container to create manually. Tutor Foundry prepares the class wiring, and NanoClaw starts an isolated session container only when a paired room needs it.</p></div>
+          <div class="help-flow">
+            <article class="help-step"><span>01</span><div><p>CHANNEL PREREQUISITE</p><h3>Configure Telegram once</h3><small>The Telegram bot token belongs to NanoClaw’s normal channel setup. Tutor Foundry never asks you to paste it here and it is not a student or tutor credential.</small></div></article>
+            <article class="help-step"><span>02</span><div><p>CLASS DRAFT</p><h3>Describe the class</h3><small>Enter the class, subject, tutor, and student personas. Saving this draft changes only the local Foundry record.</small></div></article>
+            <article class="help-step"><span>03</span><div><p>ROOM PROOF</p><h3>Pair the rooms</h3><small>Generate a one-time four-digit code and send it from the right Telegram account in the right private group. Foundry records the verified user and group route; no container is needed for this.</small></div></article>
+            <article class="help-step"><span>04</span><div><p>CLASS WIRING</p><h3>Create the tutor application</h3><small>Launch creates the agent group, class and student app databases, memberships, and shared-mode wires. The tutor and each student keep separate chat sessions while sharing the class knowledge state.</small></div></article>
+            <article class="help-step"><span>05</span><div><p>FIRST MESSAGE</p><h3>Wake a session container</h3><small>When the tutor or a student sends the first routed message, NanoClaw creates that chat’s session container. Later messages reuse it until the host retires it; another room has its own session container.</small></div></article>
+          </div>
+
+          <div class="help-grid">
+            <article class="help-card"><p class="eyebrow">WHAT IS TIED TO WHAT?</p><dl class="help-definitions"><div><dt>Pairing code</dt><dd>One-time proof that the sender controls a Telegram user and group. It is not a long-lived secret.</dd></div><div><dt>Bot token</dt><dd>One global channel credential configured outside Foundry. It is not bound to a student, tutor, or container.</dd></div><div><dt>Class wiring</dt><dd>The durable link between one agent group and the tutor/student messaging groups.</dd></div><div><dt>Session container</dt><dd>An on-demand runtime for one chat session. It is created after launch, not during pairing.</dd></div></dl></article>
+            <article class="help-card"><p class="eyebrow">COMMON QUESTIONS</p><div class="help-faq"><details open><summary>Can I pair before the container exists?</summary><p>Yes. That is the intended order. Pairing happens in the host’s Telegram interceptor and stores the verified route before any agent session wakes.</p></details><details><summary>Should I create one container for the whole class?</summary><p>No. Create one class wiring. NanoClaw manages per-room session containers automatically, while the tutor application remains shared at the agent-group level.</p></details><details><summary>What should happen after launch?</summary><p>Send a simple message in the tutor control group and each student group. Then use Status to confirm the class is initialized; coursework review and ingestion happen through the tutor control chat.</p></details></div></article>
+          </div>
+          <div class="help-footer"><b>Recommended order</b><span>Configure the bot in NanoClaw → define the class draft → pair tutor and student rooms → create class wiring → send the first message → ingest and teach.</span></div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div class="toast-stack" id="toasts" aria-live="polite"></div>
+  <dialog id="cleanupDialog"><form method="dialog"><button class="dialog-close" value="cancel">×</button><p class="eyebrow">DANGER ZONE</p><h2 id="cleanupTitle">Clean up class</h2><p id="cleanupCopy"></p><label><span>Type the application ID to confirm</span><input id="cleanupConfirmation" autocomplete="off"></label><div class="danger-options"><label><input type="radio" name="cleanupMode" value="retain" checked><span><b>Remove registration</b><small>Stops the class and retains its files for recovery.</small></span></label><label><input type="radio" name="cleanupMode" value="purge"><span><b>Permanently purge</b><small>Deletes the class workspace, learning graphs, and student data.</small></span></label></div><div class="dialog-actions"><button class="button quiet" value="cancel">Cancel</button><button class="button danger" id="confirmCleanup" value="default">Clean up</button></div></form></dialog>
+
+  <script src="app.js" defer></script>
+</body>
+</html>

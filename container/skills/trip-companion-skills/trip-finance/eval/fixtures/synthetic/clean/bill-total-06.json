@@ -1,0 +1,12 @@
+{
+  "id": "bill-total-06",
+  "kind": "bill",
+  "style": "bill-total",
+  "amount": "5072.55",
+  "currency": "INR",
+  "payer": null,
+  "payee_or_merchant": "Thalassa Restaurant",
+  "txn_id": null,
+  "degradation": null,
+  "expected": "extract"
+}

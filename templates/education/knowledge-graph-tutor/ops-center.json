@@ -1,0 +1,9 @@
+{
+  "schema": 1,
+  "id": "tutor-foundry",
+  "label": "Tutor Foundry",
+  "icon": "⌁",
+  "entry": "ops-center/index.ts",
+  "assets": "ops-center/public",
+  "assetNames": ["app.js", "styles.css"]
+}

@@ -1,0 +1,12 @@
+{
+  "id": "bill-total-08",
+  "kind": "bill",
+  "style": "bill-total",
+  "amount": "4731.30",
+  "currency": "INR",
+  "payer": null,
+  "payee_or_merchant": "Goa Fuel Station",
+  "txn_id": null,
+  "degradation": null,
+  "expected": "extract"
+}

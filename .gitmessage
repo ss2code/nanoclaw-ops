@@ -1,0 +1,5 @@
+# <type>(<scope>): concise imperative summary
+#
+# Explain what changed and why. Include the observable effect, important
+# trade-offs, or validation where useful. This paragraph is shown by GitHub as
+# the commit description.

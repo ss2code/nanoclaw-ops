@@ -1,0 +1,12 @@
+{
+  "id": "gpay-16",
+  "kind": "upi",
+  "style": "gpay",
+  "amount": "5147.00",
+  "currency": "INR",
+  "payer": "Lakshmi Iyer",
+  "payee_or_merchant": "Meera Mehta",
+  "txn_id": "T20265010213173119",
+  "degradation": null,
+  "expected": "extract"
+}

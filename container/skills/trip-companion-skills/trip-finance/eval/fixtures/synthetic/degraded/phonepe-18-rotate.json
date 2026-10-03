@@ -1,0 +1,12 @@
+{
+  "id": "phonepe-18-rotate",
+  "kind": "upi",
+  "style": "phonepe",
+  "amount": "4970.79",
+  "currency": "INR",
+  "payer": "Tara Kapoor",
+  "payee_or_merchant": "Diya Kapoor",
+  "txn_id": "T20264993916173234",
+  "degradation": "rotate",
+  "expected": "extract-or-clarify"
+}

@@ -1,0 +1,12 @@
+{
+  "id": "gpay-11",
+  "kind": "upi",
+  "style": "gpay",
+  "amount": "5894.00",
+  "currency": "INR",
+  "payer": "Diya Kapoor",
+  "payee_or_merchant": "Rohit Verma",
+  "txn_id": "T20269844307386163",
+  "degradation": null,
+  "expected": "extract"
+}

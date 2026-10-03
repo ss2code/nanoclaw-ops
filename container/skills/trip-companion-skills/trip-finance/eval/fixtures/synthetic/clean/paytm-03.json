@@ -1,0 +1,12 @@
+{
+  "id": "paytm-03",
+  "kind": "upi",
+  "style": "paytm",
+  "amount": "20578.00",
+  "currency": "INR",
+  "payer": "Raj Mehta",
+  "payee_or_merchant": "Dev Anand",
+  "txn_id": "T20262563259997360",
+  "degradation": null,
+  "expected": "extract"
+}

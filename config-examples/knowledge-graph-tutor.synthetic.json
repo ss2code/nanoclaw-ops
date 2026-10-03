@@ -1,0 +1,36 @@
+{
+  "id": "ag-kg-tutor-uat",
+  "name": "Synthetic Mathematics Tutor UAT",
+  "folder": "kg-tutor-uat",
+  "className": "Synthetic Class 6",
+  "subject": "Mathematics",
+  "gradeLevel": 6,
+  "ageRange": { "min": 12, "max": 13 },
+  "tutor": {
+    "user": "cli:kg-tutor-operator",
+    "displayName": "Test Tutor",
+    "channel": { "channel": "cli", "platformId": "kg-tutor-control", "name": "KG Tutor Control" }
+  },
+  "students": [
+    {
+      "user": "cli:kg-student-a",
+      "displayName": "Asha",
+      "channel": { "channel": "cli", "platformId": "kg-student-a", "name": "KG Student A" }
+    },
+    {
+      "user": "cli:kg-student-b",
+      "displayName": "Ben",
+      "channel": { "channel": "cli", "platformId": "kg-student-b", "name": "KG Student B" }
+    }
+  ],
+  "coursework": [
+    {
+      "document": "templates/education/knowledge-graph-tutor/app/test/fixtures/structured-hybrid-base-doc.md",
+      "graph": "Synthetic6_Mathematics_Fractions_KG",
+      "scopeType": "chapter",
+      "scopeLabel": "Fractions",
+      "role": "base",
+      "approve": true
+    }
+  ]
+}

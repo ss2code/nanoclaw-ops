@@ -1,0 +1,12 @@
+{
+  "id": "bill-total-07",
+  "kind": "bill",
+  "style": "bill-total",
+  "amount": "660.45",
+  "currency": "INR",
+  "payer": null,
+  "payee_or_merchant": "Cafe Lilliput",
+  "txn_id": null,
+  "degradation": null,
+  "expected": "extract"
+}

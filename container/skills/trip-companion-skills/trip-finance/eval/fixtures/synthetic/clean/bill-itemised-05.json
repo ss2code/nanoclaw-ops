@@ -1,0 +1,12 @@
+{
+  "id": "bill-itemised-05",
+  "kind": "bill",
+  "style": "bill-itemised",
+  "amount": "3661.35",
+  "currency": "INR",
+  "payer": null,
+  "payee_or_merchant": "Fisherman’s Wharf",
+  "txn_id": null,
+  "degradation": null,
+  "expected": "extract"
+}

@@ -1,0 +1,6 @@
+{
+  "//": "Copy to ops-center/config.json (gitignored; overlay-owned on installs using the private-overlay pattern). All keys optional — defaults live in ops-center/config.ts.",
+  "alerts": {
+    "telegramChatId": "<operator-configured-chat-id>"
+  }
+}

@@ -1,0 +1,72 @@
+{
+  "name": "nanoclaw",
+  "version": "2.1.24",
+  "description": "Personal Claude assistant. Lightweight, secure, customizable.",
+  "type": "module",
+  "packageManager": "pnpm@10.33.0",
+  "main": "dist/index.js",
+  "bin": {
+    "ncl": "bin/ncl"
+  },
+  "scripts": {
+    "build": "bash scripts/run-node22.sh node_modules/typescript/bin/tsc",
+    "start": "bash scripts/run-node22.sh dist/index.js",
+    "dev": "bash scripts/run-node22.sh node_modules/tsx/dist/cli.mjs src/index.ts",
+    "typecheck": "bash scripts/run-node22.sh node_modules/typescript/bin/tsc --noEmit",
+    "format": "bash scripts/run-node22.sh node_modules/prettier/bin/prettier.cjs --write \"src/**/*.ts\"",
+    "format:fix": "bash scripts/run-node22.sh node_modules/prettier/bin/prettier.cjs --write \"src/**/*.ts\"",
+    "format:check": "bash scripts/run-node22.sh node_modules/prettier/bin/prettier.cjs --check \"src/**/*.ts\"",
+    "prepare": "husky",
+    "setup": "bash scripts/run-node22.sh node_modules/tsx/dist/cli.mjs setup/index.ts",
+    "setup:auto": "bash scripts/run-node22.sh node_modules/tsx/dist/cli.mjs setup/auto.ts",
+    "ncl": "bash scripts/run-node22.sh node_modules/tsx/dist/cli.mjs src/cli/client.ts",
+    "chat": "bash scripts/run-node22.sh node_modules/tsx/dist/cli.mjs scripts/chat.ts",
+    "reflect": "bash scripts/run-node22.sh node_modules/tsx/dist/cli.mjs scripts/reflect.ts",
+    "auth": "bash scripts/run-node22.sh node_modules/tsx/dist/cli.mjs src/whatsapp-auth.ts",
+    "lint": "bash scripts/run-node22.sh node_modules/eslint/bin/eslint.js src/",
+    "lint:fix": "bash scripts/run-node22.sh node_modules/eslint/bin/eslint.js src/ --fix",
+    "test": "bash scripts/run-node22.sh node_modules/vitest/vitest.mjs run",
+    "test:wake-cycler": "bash scripts/wake-cycler/wake-cycler-reconcile.test.sh",
+    "test:jeeves-cos": "bash scripts/run-node22.sh node_modules/tsx/dist/cli.mjs scripts/local/jeeves-chief-of-staff-regression.ts",
+    "test:watch": "bash scripts/run-node22.sh node_modules/vitest/vitest.mjs"
+  },
+  "dependencies": {
+    "@chat-adapter/telegram": "4.29.0",
+    "@clack/core": "^1.2.0",
+    "@clack/prompts": "^1.2.0",
+    "@onecli-sh/sdk": "2.2.1",
+    "@types/qrcode": "1.5.6",
+    "@whiskeysockets/baileys": "7.0.0-rc14",
+    "better-sqlite3": "11.10.0",
+    "chat": "4.29.0",
+    "cron-parser": "5.5.0",
+    "kleur": "^4.1.5",
+    "pino": "9.6.0",
+    "qrcode": "1.5.4",
+    "undici": "8.10.2",
+    "yaml": "^2.9.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.35.0",
+    "@types/better-sqlite3": "^7.6.12",
+    "@types/node": "^22.10.0",
+    "eslint": "^9.35.0",
+    "eslint-plugin-no-catch-all": "^1.1.0",
+    "globals": "^15.12.0",
+    "husky": "^9.1.7",
+    "prettier": "^3.8.1",
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.0",
+    "typescript-eslint": "^8.35.0",
+    "vitest": "^4.0.18"
+  },
+  "engines": {
+    "node": ">=22.19.0 <23"
+  },
+  "pnpm": {
+    "overrides": {
+      "protobufjs": "7.6.6",
+      "sharp": "0.35.5"
+    }
+  }
+}

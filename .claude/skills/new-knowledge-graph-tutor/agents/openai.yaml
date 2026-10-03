@@ -1,0 +1,4 @@
+interface:
+  display_name: "New Knowledge-Graph Tutor"
+  short_description: "Create, wire, ingest, test, and remove a tutor agent."
+  default_prompt: "Use $new-knowledge-graph-tutor to create, evaluate, improve, or safely remove a tutor from a validated class configuration."

@@ -1,0 +1,12 @@
+{
+  "id": "paytm-05",
+  "kind": "upi",
+  "style": "paytm",
+  "amount": "414.92",
+  "currency": "INR",
+  "payer": "Rohit Verma",
+  "payee_or_merchant": "Vikram Iyer",
+  "txn_id": "T20265877227183298",
+  "degradation": null,
+  "expected": "extract"
+}

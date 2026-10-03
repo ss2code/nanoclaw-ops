@@ -1,0 +1,12 @@
+{
+  "id": "paytm-06-blur",
+  "kind": "upi",
+  "style": "paytm",
+  "amount": "18220.13",
+  "currency": "INR",
+  "payer": "Anil Kumar",
+  "payee_or_merchant": "Raj Mehta",
+  "txn_id": "T20265439554033155",
+  "degradation": "blur",
+  "expected": "extract-or-clarify"
+}

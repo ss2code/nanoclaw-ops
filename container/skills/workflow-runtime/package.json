@@ -1,0 +1,10 @@
+{
+  "name": "workflow-runtime-skill",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Reusable container-side workflow runtime for review-gated Gmail drafts, timers, correlations, and deterministic app workflow state",
+  "scripts": {
+    "test": "bun test"
+  }
+}
