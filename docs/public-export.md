@@ -14,7 +14,9 @@ For a later update:
 2. Review the complete exported path list, including symlinks and binary
    assets. Remove instance-specific scripts, templates, documents, fixtures,
    machine names, contact identifiers, and operator settings. Check that
-   every symlink resolves inside the export root.
+   every symlink resolves inside the export root. Keep the reviewed
+   `container/AGENTS.md` runtime contract when exporting the Codex provider;
+   installation verification must fail if that file is absent.
 3. Review workflow triggers and permissions, install scripts, license notices,
    mounted paths, credential paths, and network defaults. Run independent
    secret scanning and the repository PII lint on the final source tree.

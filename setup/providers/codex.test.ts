@@ -31,6 +31,18 @@ describe('verifyCodexInstall', () => {
     expect(problems).toEqual([]);
     expect(ok).toBe(true);
   });
+
+  it('reports a missing shared runtime contract', () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'codex-install-'));
+    const cwd = vi.spyOn(process, 'cwd').mockReturnValue(root);
+    try {
+      const { problems } = verifyCodexInstall();
+      expect(problems).toContain('missing file: container/AGENTS.md');
+    } finally {
+      cwd.mockRestore();
+      fs.rmSync(root, { recursive: true, force: true });
+    }
+  });
 });
 
 // Pure prompt builder for the failure-assist hook — no spawning involved.

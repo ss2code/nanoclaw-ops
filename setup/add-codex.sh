@@ -67,6 +67,7 @@ log() { echo "[add-codex] $*" >&2; }
 # import, and the Codex CLI in the container manifest. Any missing → (re)install.
 need_install() {
   [ ! -f src/providers/codex.ts ] && return 0
+  [ ! -f container/AGENTS.md ] && return 0
   ! grep -q "^import './codex.js';" src/providers/index.ts 2>/dev/null && return 0
   ! node -e '
     const fs = require("fs");

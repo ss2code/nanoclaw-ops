@@ -2,6 +2,7 @@ name: CI
 
 on:
   workflow_dispatch:
+  pull_request:
 
 permissions:
   contents: read
@@ -34,6 +35,9 @@ jobs:
       - name: Typecheck host
         run: pnpm exec tsc --noEmit
 
+      - name: Typecheck Ops Center
+        run: pnpm exec tsc -p ops-center/tsconfig.json --noEmit
+
       - name: Typecheck container
         run: pnpm exec tsc -p container/agent-runner/tsconfig.json --noEmit
 
@@ -43,3 +47,9 @@ jobs:
       - name: Container tests
         working-directory: container/agent-runner
         run: bun test
+
+      - name: Trip Companion tests
+        run: |
+          for skill in trip-core trip-docs trip-finance trip-planning trip-workflows; do
+            (cd "container/skills/trip-companion-skills/$skill" && bun test)
+          done

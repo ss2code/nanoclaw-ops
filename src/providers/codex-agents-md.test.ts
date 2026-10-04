@@ -56,6 +56,8 @@ describe('composeGroupAgentsMd cap handling', () => {
       composeGroupAgentsMd(g, groupDir);
       const doc = fs.readFileSync(path.join(groupDir, 'AGENTS.md'), 'utf-8');
       expect(doc).not.toContain('Omitted for size');
+      expect(doc).toContain('# NanoClaw Runtime Contract');
+      expect(doc).toContain('deliver it with `send_file`');
       // Agent-authored skills must be told a home that is BOTH persistent and
       // codex-discovered (~/.codex/skills). /workspace/agent/skills is not
       // scanned by codex, so authored skills there never trigger.

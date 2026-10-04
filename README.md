@@ -8,6 +8,15 @@ main additions: **Ops Center** for operating your agents, and **Trip Companion**
 for keeping a group's travel plans, decisions, documents, and shared expenses
 together. Agents run in separate containers and keep structured state in SQLite.
 
+## Watch the demo
+
+[![Ops Center and Trip Companion demo preview](docs/media/nanoclaw-demo-preview.png)](docs/media/nanoclaw-demo.mp4)
+
+[Play the 30-second demo](docs/media/nanoclaw-demo.mp4) ·
+[Read the captions](docs/media/nanoclaw-demo.vtt)
+
+The demo uses an isolated installation with fictional agents and trip data.
+
 ## Ops Center
 
 See which agents are running, inspect recent conversations and execution runs,
