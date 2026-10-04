@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="470" viewBox="0 0 1440 470" role="img" aria-labelledby="title desc">
+  <title id="title">How a NanoClaw message becomes an observable run</title>
+  <desc id="desc">A message from a connected chat or browser reaches the NanoClaw host, is routed to a session agent container, and returns as a reply. Ops Center shows the related status, conversation, run, and logs.</desc>
+  <rect width="1440" height="470" fill="#090f17"/>
+  <rect x="0" y="0" width="1440" height="8" fill="#37b9ee"/>
+  <text x="45" y="49" fill="#69d2f4" font-family="system-ui, sans-serif" font-size="16" font-weight="700" letter-spacing="4">OPS CENTER · HOW IT FITS</text>
+  <text x="45" y="100" fill="#f5f8fc" font-family="system-ui, sans-serif" font-size="39" font-weight="750">A message becomes a run you can inspect</text>
+  <text x="1395" y="49" text-anchor="end" fill="#8fa3b5" font-family="system-ui, sans-serif" font-size="15">Conceptual flow · not a screenshot</text>
+
+  <rect x="45" y="145" width="295" height="176" rx="19" fill="#142431" stroke="#3b6376" stroke-width="2"/>
+  <text x="69" y="178" fill="#78d8f4" font-family="system-ui, sans-serif" font-size="14" font-weight="700" letter-spacing="3">01 · START</text>
+  <text x="69" y="218" fill="#ffffff" font-family="system-ui, sans-serif" font-size="26" font-weight="700">A conversation</text>
+  <text x="69" y="253" fill="#a9bdc9" font-family="system-ui, sans-serif" font-size="16">Telegram · WhatsApp ·</text>
+  <text x="69" y="280" fill="#a9bdc9" font-family="system-ui, sans-serif" font-size="16">browser Chat · local CLI</text>
+
+  <path d="M347 233 H378" stroke="#5d859a" stroke-width="4" stroke-linecap="round"/>
+  <path d="M373 225 L382 233 L373 241" fill="none" stroke="#5d859a" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <rect x="385" y="145" width="295" height="176" rx="19" fill="#142431" stroke="#3b6376" stroke-width="2"/>
+  <text x="409" y="178" fill="#78d8f4" font-family="system-ui, sans-serif" font-size="14" font-weight="700" letter-spacing="3">02 · ROUTE</text>
+  <text x="409" y="218" fill="#ffffff" font-family="system-ui, sans-serif" font-size="26" font-weight="700">NanoClaw host</text>
+  <text x="409" y="253" fill="#a9bdc9" font-family="system-ui, sans-serif" font-size="16">Matches the chat to an agent</text>
+  <text x="409" y="280" fill="#a9bdc9" font-family="system-ui, sans-serif" font-size="16">group and session.</text>
+
+  <path d="M687 233 H718" stroke="#5d859a" stroke-width="4" stroke-linecap="round"/>
+  <path d="M713 225 L722 233 L713 241" fill="none" stroke="#5d859a" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <rect x="725" y="145" width="295" height="176" rx="19" fill="#142431" stroke="#3b6376" stroke-width="2"/>
+  <text x="749" y="178" fill="#78d8f4" font-family="system-ui, sans-serif" font-size="14" font-weight="700" letter-spacing="3">03 · WORK</text>
+  <text x="749" y="218" fill="#ffffff" font-family="system-ui, sans-serif" font-size="26" font-weight="700">Agent container</text>
+  <text x="749" y="253" fill="#a9bdc9" font-family="system-ui, sans-serif" font-size="16">Uses its tools and session data</text>
+  <text x="749" y="280" fill="#a9bdc9" font-family="system-ui, sans-serif" font-size="16">to produce a response.</text>
+
+  <path d="M1027 233 H1058" stroke="#5d859a" stroke-width="4" stroke-linecap="round"/>
+  <path d="M1053 225 L1062 233 L1053 241" fill="none" stroke="#5d859a" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <rect x="1065" y="145" width="330" height="176" rx="19" fill="#142431" stroke="#3b6376" stroke-width="2"/>
+  <text x="1089" y="178" fill="#78d8f4" font-family="system-ui, sans-serif" font-size="14" font-weight="700" letter-spacing="3">04 · RETURN</text>
+  <text x="1089" y="218" fill="#ffffff" font-family="system-ui, sans-serif" font-size="26" font-weight="700">Reply delivered</text>
+  <text x="1089" y="253" fill="#a9bdc9" font-family="system-ui, sans-serif" font-size="16">The same channel carries the</text>
+  <text x="1089" y="280" fill="#a9bdc9" font-family="system-ui, sans-serif" font-size="16">answer back to the user.</text>
+
+  <rect x="45" y="349" width="1350" height="87" rx="17" fill="#132c3a" stroke="#3286a3" stroke-width="2"/>
+  <rect x="65" y="368" width="7" height="47" rx="3" fill="#4bc6ee"/>
+  <text x="94" y="384" fill="#80ddf8" font-family="system-ui, sans-serif" font-size="15" font-weight="700" letter-spacing="2">OPS CENTER MAKES THE RUN VISIBLE</text>
+  <text x="94" y="412" fill="#e9f4f9" font-family="system-ui, sans-serif" font-size="18">Status and usage · browser conversation · run timeline and tool calls · logs and operational controls</text>
+</svg>

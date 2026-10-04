@@ -1,0 +1,80 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="760" viewBox="0 0 1440 760" role="img" aria-labelledby="title desc">
+  <title id="title">Ops Center feature map</title>
+  <desc id="desc">An illustrative map of Ops Center: Overview shows fleet health and usage; Runs and Logs explain execution; Chat reaches an agent; Models, Skills, and Connections configure it.</desc>
+  <rect width="1440" height="760" fill="#090f17"/>
+  <rect x="0" y="0" width="1440" height="8" fill="#37b9ee"/>
+  <text x="40" y="46" fill="#69d2f4" font-family="system-ui, sans-serif" font-size="16" font-weight="700" letter-spacing="4">OPS CENTER · FEATURE MAP</text>
+  <text x="40" y="101" fill="#f5f8fc" font-family="system-ui, sans-serif" font-size="42" font-weight="750">See the fleet. Follow a run. Take action.</text>
+  <text x="1398" y="47" text-anchor="end" fill="#8fa3b5" font-family="system-ui, sans-serif" font-size="15">Illustrative diagram · not a screenshot</text>
+
+  <rect x="40" y="145" width="236" height="560" rx="20" fill="#101923" stroke="#2b3d4b" stroke-width="2"/>
+  <rect x="60" y="166" width="38" height="38" rx="10" fill="#258edb"/>
+  <text x="79" y="193" text-anchor="middle" fill="#ffffff" font-family="system-ui, sans-serif" font-size="24" font-weight="800">Δ</text>
+  <text x="112" y="190" fill="#f5f8fc" font-family="system-ui, sans-serif" font-size="19" font-weight="700">NanoClaw</text>
+  <text x="112" y="208" fill="#829aaa" font-family="system-ui, sans-serif" font-size="11" letter-spacing="2">OPS CENTER</text>
+  <rect x="57" y="235" width="202" height="48" rx="11" fill="#173143"/>
+  <circle cx="78" cy="259" r="6" fill="#43c2f3"/>
+  <text x="97" y="266" fill="#eaf6fb" font-family="system-ui, sans-serif" font-size="17" font-weight="650">Overview</text>
+  <text x="97" y="330" fill="#c7d6e1" font-family="system-ui, sans-serif" font-size="17">Runs &amp; Logs</text>
+  <text x="97" y="394" fill="#c7d6e1" font-family="system-ui, sans-serif" font-size="17">Chat</text>
+  <text x="97" y="458" fill="#c7d6e1" font-family="system-ui, sans-serif" font-size="17">Models &amp; Skills</text>
+  <text x="97" y="522" fill="#c7d6e1" font-family="system-ui, sans-serif" font-size="17">Connections</text>
+  <text x="97" y="586" fill="#c7d6e1" font-family="system-ui, sans-serif" font-size="17">Knowledge &amp; Docs</text>
+  <text x="97" y="650" fill="#c7d6e1" font-family="system-ui, sans-serif" font-size="17">Trip Companion</text>
+
+  <rect x="310" y="145" width="530" height="258" rx="20" fill="#121c27" stroke="#314657" stroke-width="2"/>
+  <rect x="332" y="166" width="5" height="51" rx="2" fill="#46c8f5"/>
+  <text x="358" y="189" fill="#7ad8f5" font-family="system-ui, sans-serif" font-size="14" font-weight="700" letter-spacing="3">01 · OBSERVE</text>
+  <text x="358" y="222" fill="#f4f8fc" font-family="system-ui, sans-serif" font-size="27" font-weight="700">Overview</text>
+  <text x="358" y="250" fill="#a7bac8" font-family="system-ui, sans-serif" font-size="16">Fleet status, usage trends, and items needing attention.</text>
+  <rect x="358" y="276" width="126" height="74" rx="11" fill="#1b2b39"/>
+  <text x="374" y="303" fill="#a2b6c4" font-family="system-ui, sans-serif" font-size="13">AGENT GROUPS</text>
+  <text x="374" y="334" fill="#ffffff" font-family="system-ui, sans-serif" font-size="27" font-weight="700">3</text>
+  <rect x="496" y="276" width="126" height="74" rx="11" fill="#1b2b39"/>
+  <text x="512" y="303" fill="#a2b6c4" font-family="system-ui, sans-serif" font-size="13">WINDOW</text>
+  <text x="512" y="334" fill="#ffffff" font-family="system-ui, sans-serif" font-size="27" font-weight="700">24h</text>
+  <path d="M650 337 L680 337 L695 306 L710 335 L728 319 L744 333 L758 297 L776 325 L807 310" fill="none" stroke="#e6ad45" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="358" y="380" fill="#748e9f" font-family="system-ui, sans-serif" font-size="13">Understand what is happening before opening a detail view.</text>
+
+  <rect x="870" y="145" width="530" height="258" rx="20" fill="#121c27" stroke="#314657" stroke-width="2"/>
+  <rect x="892" y="166" width="5" height="51" rx="2" fill="#b5a2ff"/>
+  <text x="918" y="189" fill="#c4b6ff" font-family="system-ui, sans-serif" font-size="14" font-weight="700" letter-spacing="3">02 · INVESTIGATE</text>
+  <text x="918" y="222" fill="#f4f8fc" font-family="system-ui, sans-serif" font-size="27" font-weight="700">Runs &amp; Logs</text>
+  <text x="918" y="250" fill="#a7bac8" font-family="system-ui, sans-serif" font-size="16">Trace a turn, inspect tools, and read execution evidence.</text>
+  <circle cx="924" cy="293" r="7" fill="#b5a2ff"/>
+  <rect x="941" y="281" width="340" height="25" rx="7" fill="#263044"/>
+  <text x="953" y="299" fill="#dfe7f4" font-family="system-ui, sans-serif" font-size="13">Incoming message</text>
+  <circle cx="924" cy="330" r="7" fill="#b5a2ff"/>
+  <rect x="941" y="318" width="270" height="25" rx="7" fill="#263044"/>
+  <text x="953" y="336" fill="#dfe7f4" font-family="system-ui, sans-serif" font-size="13">Agent run + tool calls</text>
+  <circle cx="924" cy="367" r="7" fill="#b5a2ff"/>
+  <rect x="941" y="355" width="390" height="25" rx="7" fill="#263044"/>
+  <text x="953" y="373" fill="#dfe7f4" font-family="system-ui, sans-serif" font-size="13">Response and delivery</text>
+
+  <rect x="310" y="427" width="530" height="278" rx="20" fill="#121c27" stroke="#314657" stroke-width="2"/>
+  <rect x="332" y="448" width="5" height="51" rx="2" fill="#4bd7ad"/>
+  <text x="358" y="471" fill="#89e5c5" font-family="system-ui, sans-serif" font-size="14" font-weight="700" letter-spacing="3">03 · TALK</text>
+  <text x="358" y="504" fill="#f4f8fc" font-family="system-ui, sans-serif" font-size="27" font-weight="700">Chat</text>
+  <text x="358" y="532" fill="#a7bac8" font-family="system-ui, sans-serif" font-size="16">Open a browser conversation with an agent group.</text>
+  <rect x="358" y="557" width="320" height="45" rx="13" fill="#1e3540"/>
+  <text x="376" y="586" fill="#e5f5f6" font-family="system-ui, sans-serif" font-size="15">What changed on this trip?</text>
+  <rect x="471" y="614" width="335" height="59" rx="13" fill="#1d2d3d"/>
+  <text x="489" y="639" fill="#e9f2f8" font-family="system-ui, sans-serif" font-size="15">Here is the latest plan and</text>
+  <text x="489" y="660" fill="#e9f2f8" font-family="system-ui, sans-serif" font-size="15">the decisions still open.</text>
+
+  <rect x="870" y="427" width="530" height="278" rx="20" fill="#121c27" stroke="#314657" stroke-width="2"/>
+  <rect x="892" y="448" width="5" height="51" rx="2" fill="#e6ad45"/>
+  <text x="918" y="471" fill="#ffd187" font-family="system-ui, sans-serif" font-size="14" font-weight="700" letter-spacing="3">04 · OPERATE</text>
+  <text x="918" y="504" fill="#f4f8fc" font-family="system-ui, sans-serif" font-size="27" font-weight="700">Models, skills &amp; connections</text>
+  <text x="918" y="532" fill="#a7bac8" font-family="system-ui, sans-serif" font-size="16">Adjust an agent and see where it can receive messages.</text>
+  <rect x="918" y="565" width="133" height="43" rx="10" fill="#30333a" stroke="#7a7161"/>
+  <text x="984" y="592" text-anchor="middle" fill="#ffe1ad" font-family="system-ui, sans-serif" font-size="15">Model</text>
+  <rect x="1065" y="565" width="133" height="43" rx="10" fill="#30333a" stroke="#7a7161"/>
+  <text x="1131" y="592" text-anchor="middle" fill="#ffe1ad" font-family="system-ui, sans-serif" font-size="15">Skills</text>
+  <rect x="1212" y="565" width="157" height="43" rx="10" fill="#30333a" stroke="#7a7161"/>
+  <text x="1290" y="592" text-anchor="middle" fill="#ffe1ad" font-family="system-ui, sans-serif" font-size="15">Chat wires</text>
+  <text x="918" y="653" fill="#839bab" font-family="system-ui, sans-serif" font-size="14">Knowledge, Docs, System, and Trip Companion</text>
+  <text x="918" y="676" fill="#839bab" font-family="system-ui, sans-serif" font-size="14">remain one click away.</text>
+
+  <text x="40" y="743" fill="#718999" font-family="system-ui, sans-serif" font-size="13">A guide to the product areas. Screen labels and available controls vary by installation.</text>
+</svg>

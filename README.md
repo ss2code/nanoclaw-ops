@@ -7,41 +7,78 @@ This is a fork of [NanoClaw](https://github.com/nanocoai/nanoclaw), with two
 main additions: **Ops Center** for operating your agents, and **Trip Companion**
 for keeping a group's travel plans, decisions, documents, and shared expenses
 together. Agents run in separate containers and keep structured state in SQLite.
+This repository holds reusable source; each installation creates its own
+configuration, credentials, conversations, and trip data.
 
 ## Watch the demo
 
 [![Ops Center and Trip Companion demo preview](docs/media/nanoclaw-demo-preview.png)](docs/media/nanoclaw-demo.mp4)
 
 [Play the 30-second demo](docs/media/nanoclaw-demo.mp4) ·
-[Read the captions](docs/media/nanoclaw-demo.vtt)
+[Read the captions](docs/media/nanoclaw-demo.vtt) ·
+[Browse the visual tour](docs/visual-tour.md)
 
-The demo uses an isolated installation with fictional agents and trip data.
+The demo and screenshots use an isolated installation with fictional agents
+and trip data. The labeled diagrams explain the product; they are not UI
+screenshots.
 
 ## Ops Center
 
-See which agents are running, inspect recent conversations and execution runs,
-and check token use, estimated cost, and runtime health. Manage models, skills,
-chat connections, and agent lifecycle from the same place.
+Ops Center is the browser dashboard for a NanoClaw installation. Start with
+**Overview** to see agent activity, traffic, and items needing attention. Open
+**Runs** and **Logs** to understand what happened during a turn. Use **Chat** to
+talk to an agent group from the browser, then inspect its model, skills, chat
+connections, and lifecycle controls.
 
-The dashboard also brings together knowledge stores, documents, and trip status.
-It runs independently of the agent host, so it can remain available when the
-host needs attention.
+![Illustrative map of Ops Center's Overview, Runs and Logs, Chat, and configuration areas](docs/media/ops-center-map.svg)
 
-[Ops Center quick guide](docs/ops-center-quickstart.md)
+*Feature map: observe the fleet, investigate a run, talk to an agent, and
+adjust its setup.*
+
+This is the actual **Chat** view in the isolated demo. Each row opens a
+browser conversation with an agent group; the fictional groups shown here are
+Lisbon Trip, Ops Analytics, and Research Scout.
+
+![Ops Center Chat view with three fictional agent groups](docs/media/ops-center-chat.png)
+
+The dashboard also brings together knowledge stores, documents, and trip
+status. It runs independently of the agent host, so it can remain available
+when the host needs attention. The diagram below shows how a connected chat
+becomes a run that Ops Center can help you inspect.
+
+![Diagram showing a message routed through the NanoClaw host and an agent container, then observed in Ops Center](docs/media/ops-center-message-flow.svg)
+
+[Ops Center quick guide](docs/ops-center-quickstart.md) ·
+[More screenshots and explanations](docs/visual-tour.md#ops-center)
 
 ## Trip Companion
 
-Give a group trip an assistant in Telegram, WhatsApp, or the local CLI. It keeps
-track of who's coming, preferences, itinerary options, group decisions, shared
-expenses, and trip documents. Plans and balances live in structured stores, so
-they can be read back as the conversation continues.
+Trip Companion gives one group trip an assistant in Telegram, WhatsApp, or the
+local CLI. The group can ask for a recap, compare options, record a decision,
+split an expense, or prepare a trip document. Members, plans, decisions,
+expenses, and documents live in structured stores, so the assistant can read
+them back as the conversation continues.
 
-Create and connect a trip from Ops Center. Ask the assistant to recap the plan,
-compare an activity, record an expense, or prepare a trip document. When the
-trip is finished, the archive workflow verifies a snapshot before removing the
-live trip.
+**Create the trip.** Ops Center guides the chat connection, member setup, and
+agent creation. The screenshot shows the beginning of that browser flow with
+fictional fixture data.
 
-[Trip Companion quick guide](docs/trip-companion-quickstart.md)
+![Trip Companion setup view in Ops Center](docs/media/trip-companion-setup.png)
+
+**Follow its state.** The resulting status card brings the trip stage, agent
+runtime, members, memory, decisions, and chat wires into one view. Lisbon Trip
+and its members in this screenshot are fictional.
+
+![Trip Companion status card for a fictional Lisbon trip](docs/media/nanoclaw-demo-preview.png)
+
+![Diagram of a group conversation connected to a Trip Companion agent, structured trip records, and Ops Center](docs/media/trip-companion-flow.svg)
+
+When the trip is finished, the archive workflow verifies a snapshot before
+removing the live trip. The diagram shows how conversation, structured records,
+and Ops Center fit together.
+
+[Trip Companion quick guide](docs/trip-companion-quickstart.md) ·
+[Visual tour](docs/visual-tour.md#trip-companion)
 
 ## Get started
 

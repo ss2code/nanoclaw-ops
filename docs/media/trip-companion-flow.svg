@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="640" viewBox="0 0 1440 640" role="img" aria-labelledby="title desc">
+  <title id="title">Trip Companion workflow map</title>
+  <desc id="desc">A group talks through Telegram, WhatsApp, or the local CLI with its Trip Companion agent. The agent uses structured records for members, plans and decisions, expenses, and documents. Ops Center shows setup and status; a completed trip can be archived.</desc>
+  <rect width="1440" height="640" fill="#090f17"/>
+  <rect x="0" y="0" width="1440" height="8" fill="#37b9ee"/>
+  <text x="42" y="48" fill="#69d2f4" font-family="system-ui, sans-serif" font-size="16" font-weight="700" letter-spacing="4">TRIP COMPANION · WORKFLOW MAP</text>
+  <text x="42" y="103" fill="#f5f8fc" font-family="system-ui, sans-serif" font-size="42" font-weight="750">One group conversation. A plan that stays organized.</text>
+  <text x="1398" y="48" text-anchor="end" fill="#8fa3b5" font-family="system-ui, sans-serif" font-size="15">Illustrative diagram · not a screenshot</text>
+
+  <rect x="42" y="151" width="350" height="184" rx="20" fill="#132431" stroke="#3d6477" stroke-width="2"/>
+  <text x="66" y="186" fill="#7ad8f5" font-family="system-ui, sans-serif" font-size="14" font-weight="700" letter-spacing="3">THE GROUP</text>
+  <text x="66" y="229" fill="#ffffff" font-family="system-ui, sans-serif" font-size="28" font-weight="700">Talk where you already are</text>
+  <text x="66" y="265" fill="#b6c9d4" font-family="system-ui, sans-serif" font-size="17">Telegram · WhatsApp · local CLI</text>
+  <text x="66" y="298" fill="#8da9b9" font-family="system-ui, sans-serif" font-size="15">Questions, updates, and shared decisions</text>
+
+  <path d="M400 243 H508" stroke="#5b91a6" stroke-width="4" stroke-linecap="round"/>
+  <path d="M498 233 L510 243 L498 253" fill="none" stroke="#5b91a6" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <rect x="518" y="151" width="404" height="184" rx="20" fill="#133446" stroke="#4dbce6" stroke-width="2"/>
+  <rect x="542" y="176" width="8" height="50" rx="4" fill="#53c5ee"/>
+  <text x="571" y="194" fill="#86dff8" font-family="system-ui, sans-serif" font-size="14" font-weight="700" letter-spacing="3">THE ASSISTANT</text>
+  <text x="571" y="237" fill="#ffffff" font-family="system-ui, sans-serif" font-size="29" font-weight="700">Trip Companion agent</text>
+  <text x="571" y="274" fill="#c1d6e1" font-family="system-ui, sans-serif" font-size="17">Recaps, compares, records, prepares</text>
+  <text x="571" y="301" fill="#a7c0cf" font-family="system-ui, sans-serif" font-size="16">one trip at a time</text>
+
+  <path d="M930 243 H1038" stroke="#5b91a6" stroke-width="4" stroke-linecap="round"/>
+  <path d="M1028 233 L1040 243 L1028 253" fill="none" stroke="#5b91a6" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <rect x="1048" y="151" width="350" height="184" rx="20" fill="#132431" stroke="#3d6477" stroke-width="2"/>
+  <text x="1072" y="186" fill="#7ad8f5" font-family="system-ui, sans-serif" font-size="14" font-weight="700" letter-spacing="3">OPS CENTER</text>
+  <text x="1072" y="229" fill="#ffffff" font-family="system-ui, sans-serif" font-size="28" font-weight="700">Set up and inspect</text>
+  <text x="1072" y="265" fill="#b6c9d4" font-family="system-ui, sans-serif" font-size="17">Chat wires, members, stage, health</text>
+  <text x="1072" y="298" fill="#8da9b9" font-family="system-ui, sans-serif" font-size="15">A status view for the trip agent</text>
+
+  <path d="M720 340 V365" stroke="#5b91a6" stroke-width="4" stroke-linecap="round"/>
+  <path d="M710 355 L720 367 L730 355" fill="none" stroke="#5b91a6" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <rect x="42" y="373" width="1356" height="187" rx="20" fill="#121e29" stroke="#365064" stroke-width="2"/>
+  <text x="70" y="408" fill="#8de0f8" font-family="system-ui, sans-serif" font-size="14" font-weight="700" letter-spacing="3">STRUCTURED TRIP RECORDS</text>
+  <text x="70" y="440" fill="#d6e5ed" font-family="system-ui, sans-serif" font-size="17">The plan remains available after the conversation moves on.</text>
+  <rect x="70" y="464" width="296" height="67" rx="12" fill="#20313e"/>
+  <text x="90" y="492" fill="#f1f7fa" font-family="system-ui, sans-serif" font-size="17" font-weight="700">Members &amp; preferences</text>
+  <text x="90" y="515" fill="#a8bfcb" font-family="system-ui, sans-serif" font-size="14">Who is going and what matters</text>
+  <rect x="389" y="464" width="296" height="67" rx="12" fill="#20313e"/>
+  <text x="409" y="492" fill="#f1f7fa" font-family="system-ui, sans-serif" font-size="17" font-weight="700">Plans &amp; decisions</text>
+  <text x="409" y="515" fill="#a8bfcb" font-family="system-ui, sans-serif" font-size="14">Options, choices, open items</text>
+  <rect x="708" y="464" width="296" height="67" rx="12" fill="#20313e"/>
+  <text x="728" y="492" fill="#f1f7fa" font-family="system-ui, sans-serif" font-size="17" font-weight="700">Shared expenses</text>
+  <text x="728" y="515" fill="#a8bfcb" font-family="system-ui, sans-serif" font-size="14">Payments and balances</text>
+  <rect x="1027" y="464" width="343" height="67" rx="12" fill="#20313e"/>
+  <text x="1047" y="492" fill="#f1f7fa" font-family="system-ui, sans-serif" font-size="17" font-weight="700">Trip documents</text>
+  <text x="1047" y="515" fill="#a8bfcb" font-family="system-ui, sans-serif" font-size="14">Versioned plan and handoffs</text>
+
+  <rect x="42" y="584" width="1356" height="37" rx="12" fill="#243127"/>
+  <text x="720" y="609" text-anchor="middle" fill="#c6e8c9" font-family="system-ui, sans-serif" font-size="16" font-weight="650">When the trip ends: verify an archive, then retire the live trip workspace.</text>
+</svg>
